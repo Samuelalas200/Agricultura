@@ -60,7 +60,9 @@ export default function CropsPage() {
       cropsService.updateCropStatus(cropId, status),
     {
       onSuccess: () => {
+        // Invalidar queries de manera más agresiva
         queryClient.invalidateQueries(['crops']);
+        queryClient.refetchQueries(['crops']);
         toast.success('Estado actualizado exitosamente');
       },
       onError: (error) => {
@@ -123,7 +125,15 @@ export default function CropsPage() {
   };
 
   const handleStatusChange = async (cropId: string, newStatus: CropStatus) => {
-    updateStatusMutation.mutate({ cropId, status: newStatus });
+    return new Promise<void>((resolve, reject) => {
+      updateStatusMutation.mutate(
+        { cropId, status: newStatus },
+        {
+          onSuccess: () => resolve(),
+          onError: (error) => reject(error)
+        }
+      );
+    });
   };
 
   const handleEdit = (crop: Crop) => {

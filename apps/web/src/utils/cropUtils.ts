@@ -14,9 +14,10 @@ export function calculateCropStatus(
   expectedHarvestDate: Timestamp | Date,
   currentStatus?: CropStatus
 ): CropStatus {
-  // Si ya está cosechado manualmente, mantener ese estado
-  if (currentStatus === 'harvested') {
-    return 'harvested';
+  // Si ya hay un estado manual definido, respetarlo (excepto para el estado inicial 'planted')
+  // Solo calculamos automáticamente si el estado es 'planted' o no existe
+  if (currentStatus && currentStatus !== 'planted') {
+    return currentStatus;
   }
 
   const now = new Date();

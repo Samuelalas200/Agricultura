@@ -28,8 +28,8 @@ export function CropCard({ crop, farmName, onStatusChange, onEdit, onDelete }: C
   const progress = getCropProgress(crop.plantedDate, crop.expectedHarvestDate);
   const statusMessage = getStatusMessage(calculatedStatus, progress);
 
-  // Usar estado calculado si es diferente al almacenado (excepto si está cosechado manualmente)
-  const currentStatus = crop.status === 'harvested' ? crop.status : calculatedStatus;
+  // Usar el estado almacenado (manual) si existe, si no usar el calculado automáticamente
+  const currentStatus = crop.status || calculatedStatus;
 
   const handleStatusChange = async (newStatus: CropStatus) => {
     if (isUpdating) return;
