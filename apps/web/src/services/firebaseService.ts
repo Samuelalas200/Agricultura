@@ -6,6 +6,7 @@ import {
   addDoc, 
   updateDoc, 
   deleteDoc, 
+  deleteField,
   query, 
   where,
   Timestamp 
@@ -540,13 +541,37 @@ export const inventoryService = {
   // Actualizar item de inventario
   async updateInventoryItem(itemId: string, itemData: Partial<InventoryItem>): Promise<void> {
     try {
+      console.log('updateInventoryItem - itemId:', itemId);
+      console.log('updateInventoryItem - itemData recibido:', itemData);
+      
       const itemRef = doc(db, 'inventory', itemId);
-      await updateDoc(itemRef, {
-        ...itemData,
+      
+      // Preparar los datos para la actualización
+      const updateData: any = {
         updatedAt: Timestamp.now()
+      };
+
+      // Procesar cada campo del itemData
+      Object.entries(itemData).forEach(([key, value]) => {
+        console.log(`Procesando campo: ${key}, valor:`, value, 'tipo:', typeof value);
+        
+        if (value === null || value === undefined) {
+          // Si el valor es null o undefined, eliminamos el campo
+          updateData[key] = deleteField();
+          console.log(`Campo ${key} será eliminado`);
+        } else {
+          // Si tiene valor, lo actualizamos
+          updateData[key] = value;
+          console.log(`Campo ${key} será actualizado con:`, value);
+        }
       });
+
+      console.log('updateData final a enviar a Firestore:', updateData);
+
+      await updateDoc(itemRef, updateData);
+      console.log('✅ Actualización exitosa en Firestore');
     } catch (error) {
-      console.error('Error updating inventory item:', error);
+      console.error('❌ Error updating inventory item:', error);
       throw error;
     }
   },

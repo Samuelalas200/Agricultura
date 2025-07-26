@@ -84,11 +84,11 @@ export default function NewInventoryItemPage() {
 
       // Solo agregar campos de fecha si tienen valor
       if (data.purchaseDate) {
-        itemData.purchaseDate = Timestamp.fromDate(new Date(data.purchaseDate));
+        itemData.purchaseDate = Timestamp.fromDate(new Date(data.purchaseDate + 'T12:00:00'));
       }
       
       if (data.expirationDate) {
-        itemData.expirationDate = Timestamp.fromDate(new Date(data.expirationDate));
+        itemData.expirationDate = Timestamp.fromDate(new Date(data.expirationDate + 'T12:00:00'));
       }
       
       await inventoryService.createInventoryItem(itemData);

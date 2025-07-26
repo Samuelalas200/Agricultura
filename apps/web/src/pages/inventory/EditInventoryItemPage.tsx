@@ -1,17 +1,23 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useQuery } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
 import { ArrowLeft, Save, Package } from 'lucide-react';
 import { useAuth } from '../../contexts/FirebaseAuthContext';
 import { inventoryService, InventoryItem } from '../../services/firebaseService';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
+import { toast } from '../../components/ui/Toaster';
+import { Timestamp } from 'firebase/firestore';
 
-type EditInventoryItemData = Omit<InventoryItem, 'id' | 'userId' | 'isActive' | 'createdAt' | 'updatedAt'>;
+type EditInventoryItemData = Omit<InventoryItem, 'id' | 'userId' | 'isActive' | 'createdAt' | 'updatedAt' | 'purchaseDate' | 'expirationDate'> & {
+  purchaseDate?: Date | Timestamp;
+  expirationDate?: Date | Timestamp;
+};
 
 export default function EditInventoryItemPage() {
   const { id } = useParams<{ id: string }>();
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState<EditInventoryItemData>({
     name: '',
@@ -29,6 +35,35 @@ export default function EditInventoryItemPage() {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Función helper para convertir fechas a formato string para inputs
+  const formatDateForInput = (date: any): string => {
+    if (!date) return '';
+    
+    let dateObj: Date;
+    
+    // Si es un Timestamp de Firestore
+    if (date && typeof date.toDate === 'function') {
+      dateObj = date.toDate();
+    }
+    // Si es un objeto Date
+    else if (date instanceof Date) {
+      dateObj = date;
+    }
+    // Si es un string, lo convertimos a Date
+    else if (typeof date === 'string') {
+      dateObj = new Date(date);
+    } else {
+      return '';
+    }
+    
+    // Usar toLocaleDateString con formato ISO para evitar problemas de zona horaria
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
+  };
 
   const { data: item, isLoading } = useQuery(
     ['inventory-item', id],
@@ -49,8 +84,17 @@ export default function EditInventoryItemPage() {
         supplier: item.supplier || '',
         location: item.location || '',
         description: item.description || '',
-        purchaseDate: item.purchaseDate || undefined,
-        expirationDate: item.expirationDate || undefined
+        // Convertir Timestamps de Firestore a Date objects con hora del mediodía
+        purchaseDate: item.purchaseDate ? 
+          (typeof item.purchaseDate.toDate === 'function' ? 
+            new Date(item.purchaseDate.toDate().toDateString() + ' 12:00:00') : 
+            new Date(item.purchaseDate.toString() + ' 12:00:00')) 
+          : undefined,
+        expirationDate: item.expirationDate ? 
+          (typeof item.expirationDate.toDate === 'function' ? 
+            new Date(item.expirationDate.toDate().toDateString() + ' 12:00:00') : 
+            new Date(item.expirationDate.toString() + ' 12:00:00')) 
+          : undefined
       });
     }
   }, [item]);
@@ -67,7 +111,7 @@ export default function EditInventoryItemPage() {
   const handleDateChange = (name: string, value: string) => {
     setFormData((prev: EditInventoryItemData) => ({
       ...prev,
-      [name]: value ? new Date(value) : undefined
+      [name]: value ? new Date(value + 'T12:00:00') : undefined // Agregar hora del mediodía para evitar problemas de zona horaria
     }));
   };
 
@@ -76,22 +120,77 @@ export default function EditInventoryItemPage() {
     if (!currentUser || !item?.id) return;
 
     if (!formData.name.trim()) {
-      alert('El nombre del item es obligatorio');
+      toast.error('Campo requerido', 'El nombre del item es obligatorio');
       return;
     }
 
     if (formData.quantity < 0 || formData.minStock < 0 || formData.cost < 0) {
-      alert('Los valores numéricos no pueden ser negativos');
+      toast.error('Valores inválidos', 'Los valores numéricos no pueden ser negativos');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await inventoryService.updateInventoryItem(item.id, formData);
-      navigate(`/inventory/${item.id}`);
+      // Preparar los datos para enviar
+      const submitData: any = {
+        name: formData.name,
+        category: formData.category,
+        quantity: formData.quantity,
+        unit: formData.unit,
+        minStock: formData.minStock,
+        cost: formData.cost,
+        brand: formData.brand || null, // null para eliminar si está vacío
+        supplier: formData.supplier || null,
+        location: formData.location || null,
+        description: formData.description || null
+      };
+
+      // Manejar fechas: convertir a Timestamp si existe, null si no
+      if (formData.purchaseDate) {
+        if (formData.purchaseDate instanceof Date) {
+          submitData.purchaseDate = Timestamp.fromDate(formData.purchaseDate);
+        } else if (typeof formData.purchaseDate === 'object' && 'toDate' in formData.purchaseDate) {
+          // Ya es un Timestamp, usarlo directamente
+          submitData.purchaseDate = formData.purchaseDate;
+        }
+      } else {
+        submitData.purchaseDate = null; // Eliminar campo si no hay fecha
+      }
+
+      if (formData.expirationDate) {
+        if (formData.expirationDate instanceof Date) {
+          submitData.expirationDate = Timestamp.fromDate(formData.expirationDate);
+        } else if (typeof formData.expirationDate === 'object' && 'toDate' in formData.expirationDate) {
+          // Ya es un Timestamp, usarlo directamente
+          submitData.expirationDate = formData.expirationDate;
+        }
+      } else {
+        submitData.expirationDate = null; // Eliminar campo si no hay fecha
+      }
+      
+      console.log('📝 FormData antes de procesar:', formData);
+      console.log('📅 purchaseDate tipo:', typeof formData.purchaseDate, 'valor:', formData.purchaseDate);
+      console.log('📅 expirationDate tipo:', typeof formData.expirationDate, 'valor:', formData.expirationDate);
+      
+      console.log('📤 Datos a enviar:', submitData); // Para debug
+      
+      await inventoryService.updateInventoryItem(item.id, submitData);
+      console.log('✅ Navegando de vuelta...');
+      
+      // Mostrar mensaje de éxito
+      toast.success('Item actualizado', 'Los cambios se guardaron exitosamente');
+      
+      // Invalidar cache para refrescar los datos
+      await queryClient.invalidateQueries(['inventory-item', item.id]);
+      await queryClient.invalidateQueries(['inventory-items']);
+      
+      // Pequeño delay para asegurar que se actualice el cache
+      setTimeout(() => {
+        navigate(`/inventory/${item.id}`);
+      }, 100);
     } catch (error) {
       console.error('Error updating item:', error);
-      alert('Error al actualizar el item');
+      toast.error('Error al actualizar', 'No se pudieron guardar los cambios');
     } finally {
       setIsSubmitting(false);
     }
@@ -341,7 +440,7 @@ export default function EditInventoryItemPage() {
                 <input
                   type="date"
                   id="purchaseDate"
-                  value={formData.purchaseDate ? formData.purchaseDate.toDate().toISOString().split('T')[0] : ''}
+                  value={formatDateForInput(formData.purchaseDate)}
                   onChange={(e) => handleDateChange('purchaseDate', e.target.value)}
                   className="input"
                 />
@@ -354,7 +453,7 @@ export default function EditInventoryItemPage() {
                 <input
                   type="date"
                   id="expirationDate"
-                  value={formData.expirationDate ? formData.expirationDate.toDate().toISOString().split('T')[0] : ''}
+                  value={formatDateForInput(formData.expirationDate)}
                   onChange={(e) => handleDateChange('expirationDate', e.target.value)}
                   className="input"
                 />
