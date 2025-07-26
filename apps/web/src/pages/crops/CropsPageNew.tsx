@@ -3,7 +3,7 @@ import { useQuery } from 'react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, Wheat, Calendar } from 'lucide-react';
+import { Plus, Wheat, MapPin, Calendar } from 'lucide-react';
 import { cropsService, farmsService, Crop } from '@/services/firebaseService';
 import { useAuth } from '@/contexts/FirebaseAuthContext';
 import { toast } from '@/components/ui/Toaster';

@@ -8,35 +8,82 @@ import {
   Calendar,
   Cloud,
   AlertTriangle,
-  Plus
+  Plus,
+  Database
 } from 'lucide-react';
 import { useAuth } from '@/contexts/FirebaseAuthContext';
-import { farmsService } from '@/services/farmsService';
-import { cropsService } from '@/services/cropsService';
-import { tasksService } from '@/services/tasksService';
+import { farmsService, cropsService, tasksService } from '@/services/firebaseService';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { formatDate, formatArea } from '@campo360/lib';
+import { createSampleData } from '@/utils/sampleData';
 
 export default function DashboardPage() {
   const { currentUser } = useAuth();
 
+  // Si no hay usuario autenticado, no hacer queries
+  const userId = currentUser?.uid;
+
   // Queries para obtener datos del dashboard
-  const { data: farms, isLoading: farmsLoading } = useQuery('farms', farmsService.getFarms);
-  const { data: crops, isLoading: cropsLoading } = useQuery('crops', () => cropsService.getCrops());
-  const { data: tasks, isLoading: tasksLoading } = useQuery('tasks', tasksService.getTasks);
+  const { data: farms = [], isLoading: farmsLoading, refetch: refetchFarms } = useQuery(
+    ['farms', userId], 
+    () => farmsService.getFarms(userId!),
+    { enabled: !!userId }
+  );
+  
+  const { data: crops = [], isLoading: cropsLoading, refetch: refetchCrops } = useQuery(
+    ['crops', userId], 
+    () => cropsService.getCrops(userId!),
+    { enabled: !!userId }
+  );
+  
+  const { data: tasks = [], isLoading: tasksLoading, refetch: refetchTasks } = useQuery(
+    ['tasks', userId], 
+    () => tasksService.getTasks(userId!),
+    { enabled: !!userId }
+  );
+
+  // Función para crear datos de prueba
+  const handleCreateSampleData = async () => {
+    if (!userId) return;
+    
+    try {
+      console.log('🌱 Creando datos de prueba...');
+      await createSampleData(userId);
+      
+      // Refrescar todas las queries para mostrar los nuevos datos
+      await Promise.all([
+        refetchFarms(),
+        refetchCrops(), 
+        refetchTasks()
+      ]);
+      
+      alert('✅ ¡Datos de prueba creados exitosamente! Revisa tu dashboard.');
+    } catch (error) {
+      console.error('Error creando datos de prueba:', error);
+      alert('❌ Error creando datos de prueba. Revisa la consola.');
+    }
+  };
 
   // Cálculos para las estadísticas
   const totalFarms = farms?.length || 0;
   const totalCrops = crops?.length || 0;
   const totalTasks = tasks?.length || 0;
-  const totalArea = farms?.reduce((sum, farm) => sum + farm.totalArea, 0) || 0;
+  const totalArea = farms?.reduce((sum, farm) => sum + farm.size, 0) || 0;
   
-  // Tareas pendientes y vencidas
-  const pendingTasks = tasks?.filter(task => task.status === 'PENDING') || [];
-  const overdueTasks = tasks?.filter(task => task.status === 'OVERDUE') || [];
+  // Tareas pendientes y vencidas - actualizar lógica para Firebase
+  const pendingTasks = tasks?.filter(task => task.status === 'pending') || [];
+  const inProgressTasks = tasks?.filter(task => task.status === 'in-progress') || [];
+  const completedTasks = tasks?.filter(task => task.status === 'completed') || [];
+  
+  // Para tareas vencidas, comparamos con la fecha actual
+  const now = new Date();
+  const overdueTasks = tasks?.filter(task => {
+    const dueDate = task.dueDate.toDate();
+    return dueDate < now && task.status !== 'completed';
+  }) || [];
 
   // Cultivos por estado
-  const activeCrops = crops?.filter(crop => crop.status === 'GROWING') || [];
+  const activeCrops = crops?.filter(crop => crop.status === 'growing') || [];
 
   const stats = [
     {
@@ -95,6 +142,17 @@ export default function DashboardPage() {
         </div>
         
         <div className="flex items-center space-x-3 mt-4 sm:mt-0">
+          {/* Botón temporal para crear datos de prueba */}
+          {totalFarms === 0 && (
+            <button
+              onClick={handleCreateSampleData}
+              className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+            >
+              <Database className="w-4 h-4 mr-2" />
+              Crear Datos de Prueba
+            </button>
+          )}
+          
           <div className="flex items-center text-sm text-gray-500">
             <Calendar className="w-4 h-4 mr-1" />
             {formatDate(new Date(), 'long')}
@@ -178,18 +236,16 @@ export default function DashboardPage() {
                 <div className="flex-1">
                   <p className="font-medium text-gray-900">{task.title}</p>
                   <p className="text-sm text-gray-600">
-                    {task.farm.name} • {formatDate(task.scheduledDate)}
+                    {task.description} • {formatDate(task.dueDate.toDate())}
                   </p>
                 </div>
                 <span className={`badge ${
-                  task.status === 'COMPLETED' ? 'badge-success' :
-                  task.status === 'OVERDUE' ? 'badge-error' :
-                  task.status === 'IN_PROGRESS' ? 'badge-info' :
+                  task.status === 'completed' ? 'badge-success' :
+                  task.status === 'in-progress' ? 'badge-info' :
                   'badge-gray'
                 }`}>
-                  {task.status === 'COMPLETED' ? 'Completada' :
-                   task.status === 'OVERDUE' ? 'Vencida' :
-                   task.status === 'IN_PROGRESS' ? 'En Progreso' :
+                  {task.status === 'completed' ? 'Completada' :
+                   task.status === 'in-progress' ? 'En Progreso' :
                    'Pendiente'}
                 </span>
               </div>
@@ -230,11 +286,13 @@ export default function DashboardPage() {
                 <div className="flex-1">
                   <p className="font-medium text-gray-900">{crop.name}</p>
                   <p className="text-sm text-gray-600">
-                    {crop.variety} • {formatArea(crop.area)} • {crop.farm.name}
+                    {crop.variety} • Plantado: {formatDate(crop.plantedDate.toDate())}
                   </p>
                 </div>
                 <span className="badge badge-success">
-                  En Crecimiento
+                  {crop.status === 'growing' ? 'En Crecimiento' :
+                   crop.status === 'ready' ? 'Listo' :
+                   crop.status === 'harvested' ? 'Cosechado' : 'Plantado'}
                 </span>
               </div>
             ))}

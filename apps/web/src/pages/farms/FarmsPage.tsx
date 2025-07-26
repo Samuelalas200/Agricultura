@@ -4,28 +4,32 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Plus, MapPin, Users, Wheat, Edit, Trash2 } from 'lucide-react';
-import { farmsService } from '@/services/farmsService';
+import { farmsService, Farm } from '@/services/firebaseService';
+import { useAuth } from '@/contexts/FirebaseAuthContext';
 import { toast } from '@/components/ui/Toaster';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { formatArea } from '@campo360/lib';
-import type { Farm } from '@campo360/lib';
 
 const farmSchema = z.object({
   name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
   location: z.string().min(5, 'La ubicación debe tener al menos 5 caracteres'),
-  totalArea: z.number().min(0.01, 'El área debe ser mayor a 0'),
-  description: z.string().optional(),
+  size: z.number().min(0.01, 'El área debe ser mayor a 0'),
 });
 
 type FarmForm = z.infer<typeof farmSchema>;
 
 export default function FarmsPage() {
+  const { currentUser } = useAuth();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingFarm, setEditingFarm] = useState<Farm | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Query para obtener fincas
-  const { data: farms, isLoading, refetch } = useQuery('farms', farmsService.getFarms);
+  const { data: farms = [], isLoading, refetch } = useQuery(
+    ['farms', currentUser?.uid], 
+    () => currentUser ? farmsService.getFarms(currentUser.uid) : Promise.resolve([]),
+    { enabled: !!currentUser }
+  );
 
   const {
     register,
@@ -38,19 +42,22 @@ export default function FarmsPage() {
   });
 
   const onSubmit = async (data: FarmForm) => {
+    if (!currentUser) return;
+    
     setIsSubmitting(true);
     try {
-      if (editingFarm) {
+      if (editingFarm && editingFarm.id) {
         await farmsService.updateFarm(editingFarm.id, {
           ...data,
-          totalArea: Number(data.totalArea),
+          size: Number(data.size),
         });
         toast.success('¡Finca actualizada!', 'Los cambios han sido guardados exitosamente');
         setEditingFarm(null);
       } else {
         await farmsService.createFarm({
           ...data,
-          totalArea: Number(data.totalArea),
+          size: Number(data.size),
+          userId: currentUser.uid,
         });
         toast.success('¡Finca creada!', 'La finca ha sido registrada exitosamente');
         setShowCreateForm(false);
@@ -61,7 +68,7 @@ export default function FarmsPage() {
     } catch (error: any) {
       toast.error(
         editingFarm ? 'Error al actualizar finca' : 'Error al crear finca',
-        error.response?.data?.message || 'Ha ocurrido un error'
+        error.message || 'Ha ocurrido un error'
       );
     } finally {
       setIsSubmitting(false);
@@ -72,12 +79,13 @@ export default function FarmsPage() {
     setEditingFarm(farm);
     setValue('name', farm.name);
     setValue('location', farm.location);
-    setValue('totalArea', farm.totalArea);
-    setValue('description', farm.description || '');
+    setValue('size', farm.size);
     setShowCreateForm(true);
   };
 
   const handleDelete = async (farm: Farm) => {
+    if (!farm.id) return;
+    
     if (!window.confirm(`¿Estás seguro de que quieres eliminar la finca "${farm.name}"?`)) {
       return;
     }
@@ -87,7 +95,7 @@ export default function FarmsPage() {
       toast.success('Finca eliminada', 'La finca ha sido eliminada exitosamente');
       refetch();
     } catch (error: any) {
-      toast.error('Error al eliminar finca', error.response?.data?.message || 'Ha ocurrido un error');
+      toast.error('Error al eliminar finca', error.message || 'Ha ocurrido un error');
     }
   };
 
@@ -172,27 +180,17 @@ export default function FarmsPage() {
               <div>
                 <label className="label">Área Total (hectáreas)</label>
                 <input
-                  {...register('totalArea', { valueAsNumber: true })}
+                  {...register('size', { valueAsNumber: true })}
                   type="number"
                   step="0.01"
                   min="0.01"
-                  className={`input ${errors.totalArea ? 'input-error' : ''}`}
+                  className={`input ${errors.size ? 'input-error' : ''}`}
                   placeholder="Ej: 25.5"
                 />
-                {errors.totalArea && (
-                  <p className="mt-1 text-sm text-error-600">{errors.totalArea.message}</p>
+                {errors.size && (
+                  <p className="mt-1 text-sm text-error-600">{errors.size.message}</p>
                 )}
               </div>
-            </div>
-            
-            <div>
-              <label className="label">Descripción (opcional)</label>
-              <textarea
-                {...register('description')}
-                rows={3}
-                className="input resize-none"
-                placeholder="Características especiales, tipos de suelo, acceso, etc."
-              />
             </div>
             
             <div className="flex justify-end space-x-3">
@@ -284,28 +282,22 @@ export default function FarmsPage() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Área Total</span>
-                    <span className="font-medium text-gray-900">{formatArea(farm.totalArea)}</span>
+                    <span className="font-medium text-gray-900">{formatArea(farm.size)}</span>
                   </div>
                   
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Cultivos</span>
                     <div className="flex items-center">
                       <Wheat className="w-4 h-4 text-green-600 mr-1" />
-                      <span className="font-medium text-gray-900">{farm.crops?.length || 0}</span>
+                      <span className="font-medium text-gray-900">0</span>
                     </div>
                   </div>
-                  
-                  {farm.description && (
-                    <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                      <p className="text-sm text-gray-700">{farm.description}</p>
-                    </div>
-                  )}
                 </div>
                 
                 <div className="mt-4 pt-4 border-t border-gray-100">
                   <div className="flex items-center text-xs text-gray-500">
                     <Users className="w-3 h-3 mr-1" />
-                    <span>Registrado el {new Date(farm.createdAt).toLocaleDateString('es-CO')}</span>
+                    <span>Registrado el {farm.createdAt ? new Date(farm.createdAt.toDate()).toLocaleDateString('es-CO') : 'Fecha no disponible'}</span>
                   </div>
                 </div>
               </div>
