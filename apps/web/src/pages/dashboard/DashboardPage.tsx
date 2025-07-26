@@ -66,14 +66,10 @@ export default function DashboardPage() {
 
   // Cálculos para las estadísticas
   const totalFarms = farms?.length || 0;
-  const totalCrops = crops?.length || 0;
-  const totalTasks = tasks?.length || 0;
   const totalArea = farms?.reduce((sum, farm) => sum + farm.size, 0) || 0;
   
   // Tareas pendientes y vencidas - actualizar lógica para Firebase
   const pendingTasks = tasks?.filter(task => task.status === 'pending') || [];
-  const inProgressTasks = tasks?.filter(task => task.status === 'in-progress') || [];
-  const completedTasks = tasks?.filter(task => task.status === 'completed') || [];
   
   // Para tareas vencidas, comparamos con la fecha actual
   const now = new Date();

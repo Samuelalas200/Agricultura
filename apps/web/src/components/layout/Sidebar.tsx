@@ -4,7 +4,6 @@ import {
   MapPin, 
   Wheat, 
   CheckSquare, 
-  Settings,
   LogOut
 } from 'lucide-react';
 import { useAuth } from '@/contexts/FirebaseAuthContext';
