@@ -15,19 +15,27 @@ async function bootstrap() {
     }),
   );
 
-  // Configuración de CORS
+  // Configuración de CORS usando variables de entorno
+  const corsOrigins = process.env.CORS_ORIGIN?.split(',') || [
+    'http://localhost:5173', 
+    'http://localhost:5174', 
+    'http://localhost:5175', 
+    'http://localhost:5176', 
+    'http://localhost:5177'
+  ];
+  
   app.enableCors({
-    origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176', 'http://localhost:5177'],
+    origin: corsOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   });
 
-  // Configuración de Swagger
+  // Configuración de Swagger usando variables de entorno
   const config = new DocumentBuilder()
-    .setTitle('Campo360 Manager API')
-    .setDescription('API para el sistema de gestión agrícola Campo360')
-    .setVersion('1.0')
+    .setTitle(process.env.API_TITLE || 'Campo360 Manager API')
+    .setDescription(process.env.API_DESCRIPTION || 'API para el sistema de gestión agrícola Campo360')
+    .setVersion(process.env.API_VERSION || '1.0')
     .addBearerAuth()
     .build();
   

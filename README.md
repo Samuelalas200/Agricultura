@@ -46,6 +46,12 @@ cd Agricultura
 # Instalar dependencias
 pnpm install
 
+# Configurar variables de entorno
+# Backend
+cp apps/api/.env.example apps/api/.env
+# Frontend
+cp apps/web/.env.example apps/web/.env.local
+
 # Configurar base de datos
 cd apps/api
 pnpm prisma generate
@@ -117,9 +123,11 @@ El sistema utiliza JWT (JSON Web Tokens) para la autenticación segura:
 
 ```
 Usuario de prueba:
-Email: admin@ejemplo.com
-Password: password123
+Email: admin@campo360.com
+Password: 123456789
 ```
+
+> **Nota**: Estas credenciales se crean automáticamente con el comando `pnpm prisma db seed`
 
 ## 🗄️ Base de Datos
 
@@ -166,14 +174,36 @@ La API está documentada con Swagger en: `http://localhost:3001/api/docs`
 
 **Backend (`apps/api/.env`)**:
 ```env
-DATABASE_URL="file:./dev.db"
-JWT_SECRET="tu-jwt-secret-aqui"
+# Database
+DATABASE_URL="file:./prisma/dev.db"
+
+# JWT Configuration - ¡CAMBIAR EN PRODUCCIÓN!
+JWT_SECRET="campo360-super-secret-jwt-key-2024-production-ready"
+JWT_EXPIRES_IN="7d"
+
+# Server Configuration
+PORT=3001
+NODE_ENV="development"
+
+# CORS Configuration
+CORS_ORIGIN="http://localhost:5177,http://localhost:5173"
+
+# Security
+BCRYPT_ROUNDS=12
 ```
 
 **Frontend (`apps/web/.env.local`)**:
 ```env
+# API Configuration
 VITE_API_URL=http://localhost:3001
+
+# Application Configuration
+VITE_APP_NAME="Campo360 Manager"
+VITE_DEBUG=true
+VITE_PWA_ENABLED=true
 ```
+
+> **⚠️ Importante**: Nunca commitees archivos `.env` con datos sensibles. Usa los archivos `.env.example` como plantilla.
 
 ## 🚀 Despliegue
 
