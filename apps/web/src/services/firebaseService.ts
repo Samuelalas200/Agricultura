@@ -50,6 +50,64 @@ export interface Task {
   updatedAt?: Timestamp;
 }
 
+export interface InventoryItem {
+  id?: string;
+  name: string;
+  category: 'seeds' | 'fertilizers' | 'pesticides' | 'tools' | 'machinery' | 'other';
+  brand?: string;
+  description?: string;
+  quantity: number;
+  unit: string; // kg, L, unidades, etc.
+  minStock: number; // Para alertas de stock bajo
+  cost: number; // Costo por unidad
+  supplier?: string;
+  purchaseDate?: Timestamp;
+  expirationDate?: Timestamp;
+  location?: string; // Dónde se almacena
+  farmId?: string;
+  userId: string;
+  isActive: boolean;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
+}
+
+export interface Purchase {
+  id?: string;
+  itemId: string;
+  itemName: string;
+  category: string;
+  quantity: number;
+  unit: string;
+  unitCost: number;
+  totalCost: number;
+  supplier?: string;
+  invoiceNumber?: string;
+  purchaseDate: Timestamp;
+  notes?: string;
+  farmId?: string;
+  userId: string;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
+}
+
+export interface StockMovement {
+  id?: string;
+  itemId: string;
+  itemName: string;
+  movementType: 'purchase' | 'usage' | 'adjustment' | 'transfer';
+  quantity: number;
+  unit: string;
+  previousStock: number;
+  newStock: number;
+  reason?: string;
+  farmId?: string;
+  cropId?: string;
+  taskId?: string;
+  userId: string;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
+}
+
 // ============ FARMS SERVICE ============
 export const farmsService = {
   // Obtener todas las granjas del usuario
@@ -378,6 +436,320 @@ export const tasksService = {
       await deleteDoc(taskRef);
     } catch (error) {
       console.error('Error deleting task:', error);
+      throw error;
+    }
+  }
+};
+
+// ============ INVENTORY SERVICE ============
+export const inventoryService = {
+  // Obtener todos los items del inventario del usuario
+  async getInventoryItems(userId: string): Promise<InventoryItem[]> {
+    try {
+      const itemsRef = collection(db, 'inventory');
+      const q = query(itemsRef, where('userId', '==', userId), where('isActive', '==', true));
+      const querySnapshot = await getDocs(q);
+      
+      const items = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as InventoryItem));
+      
+      return items.sort((a, b) => {
+        const aTime = a.createdAt?.toMillis() || 0;
+        const bTime = b.createdAt?.toMillis() || 0;
+        return bTime - aTime;
+      });
+    } catch (error) {
+      console.error('Error fetching inventory items:', error);
+      throw error;
+    }
+  },
+
+  // Obtener items por categoría
+  async getItemsByCategory(userId: string, category: string): Promise<InventoryItem[]> {
+    try {
+      const itemsRef = collection(db, 'inventory');
+      const q = query(
+        itemsRef, 
+        where('userId', '==', userId),
+        where('category', '==', category),
+        where('isActive', '==', true)
+      );
+      const querySnapshot = await getDocs(q);
+      
+      const items = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as InventoryItem));
+      
+      return items.sort((a, b) => a.name.localeCompare(b.name));
+    } catch (error) {
+      console.error('Error fetching items by category:', error);
+      throw error;
+    }
+  },
+
+  // Obtener items con stock bajo
+  async getLowStockItems(userId: string): Promise<InventoryItem[]> {
+    try {
+      const items = await this.getInventoryItems(userId);
+      return items.filter(item => item.quantity <= item.minStock);
+    } catch (error) {
+      console.error('Error fetching low stock items:', error);
+      throw error;
+    }
+  },
+
+  // Obtener un item específico
+  async getInventoryItem(itemId: string): Promise<InventoryItem | null> {
+    try {
+      const itemRef = doc(db, 'inventory', itemId);
+      const itemSnap = await getDoc(itemRef);
+      
+      if (itemSnap.exists()) {
+        return { id: itemSnap.id, ...itemSnap.data() } as InventoryItem;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching inventory item:', error);
+      throw error;
+    }
+  },
+
+  // Crear nuevo item de inventario
+  async createInventoryItem(itemData: Omit<InventoryItem, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    try {
+      const itemsRef = collection(db, 'inventory');
+      const now = Timestamp.now();
+      
+      const docRef = await addDoc(itemsRef, {
+        ...itemData,
+        isActive: true,
+        createdAt: now,
+        updatedAt: now
+      });
+      
+      return docRef.id;
+    } catch (error) {
+      console.error('Error creating inventory item:', error);
+      throw error;
+    }
+  },
+
+  // Actualizar item de inventario
+  async updateInventoryItem(itemId: string, itemData: Partial<InventoryItem>): Promise<void> {
+    try {
+      const itemRef = doc(db, 'inventory', itemId);
+      await updateDoc(itemRef, {
+        ...itemData,
+        updatedAt: Timestamp.now()
+      });
+    } catch (error) {
+      console.error('Error updating inventory item:', error);
+      throw error;
+    }
+  },
+
+  // Actualizar stock del item
+  async updateStock(itemId: string, newQuantity: number, movementType: StockMovement['movementType'], reason?: string): Promise<void> {
+    try {
+      const item = await this.getInventoryItem(itemId);
+      if (!item) throw new Error('Item not found');
+
+      const previousStock = item.quantity;
+      
+      // Actualizar el item
+      await this.updateInventoryItem(itemId, { quantity: newQuantity });
+      
+      // Crear movimiento de stock
+      await stockMovementService.createStockMovement({
+        itemId: itemId,
+        itemName: item.name,
+        movementType,
+        quantity: newQuantity - previousStock,
+        unit: item.unit,
+        previousStock,
+        newStock: newQuantity,
+        reason,
+        farmId: item.farmId,
+        userId: item.userId
+      });
+    } catch (error) {
+      console.error('Error updating stock:', error);
+      throw error;
+    }
+  },
+
+  // Eliminar item (soft delete)
+  async deleteInventoryItem(itemId: string): Promise<void> {
+    try {
+      await this.updateInventoryItem(itemId, { isActive: false });
+    } catch (error) {
+      console.error('Error deleting inventory item:', error);
+      throw error;
+    }
+  }
+};
+
+// ============ PURCHASES SERVICE ============
+export const purchasesService = {
+  // Obtener todas las compras del usuario
+  async getPurchases(userId: string): Promise<Purchase[]> {
+    try {
+      const purchasesRef = collection(db, 'purchases');
+      const q = query(purchasesRef, where('userId', '==', userId));
+      const querySnapshot = await getDocs(q);
+      
+      const purchases = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Purchase));
+      
+      return purchases.sort((a, b) => {
+        const aTime = a.purchaseDate?.toMillis() || 0;
+        const bTime = b.purchaseDate?.toMillis() || 0;
+        return bTime - aTime;
+      });
+    } catch (error) {
+      console.error('Error fetching purchases:', error);
+      throw error;
+    }
+  },
+
+  // Obtener compras por período
+  async getPurchasesByDateRange(userId: string, startDate: Timestamp, endDate: Timestamp): Promise<Purchase[]> {
+    try {
+      const purchases = await this.getPurchases(userId);
+      return purchases.filter(purchase => {
+        const purchaseTime = purchase.purchaseDate.toMillis();
+        return purchaseTime >= startDate.toMillis() && purchaseTime <= endDate.toMillis();
+      });
+    } catch (error) {
+      console.error('Error fetching purchases by date range:', error);
+      throw error;
+    }
+  },
+
+  // Crear nueva compra
+  async createPurchase(purchaseData: Omit<Purchase, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    try {
+      const purchasesRef = collection(db, 'purchases');
+      const now = Timestamp.now();
+      
+      const docRef = await addDoc(purchasesRef, {
+        ...purchaseData,
+        createdAt: now,
+        updatedAt: now
+      });
+
+      // Actualizar stock del item si existe
+      try {
+        await inventoryService.updateStock(
+          purchaseData.itemId,
+          0, // Se actualizará con la cantidad actual + nueva cantidad
+          'purchase',
+          `Compra: ${purchaseData.invoiceNumber || 'Sin factura'}`
+        );
+      } catch (error) {
+        console.warn('Could not update stock for purchase:', error);
+      }
+      
+      return docRef.id;
+    } catch (error) {
+      console.error('Error creating purchase:', error);
+      throw error;
+    }
+  },
+
+  // Actualizar compra
+  async updatePurchase(purchaseId: string, purchaseData: Partial<Purchase>): Promise<void> {
+    try {
+      const purchaseRef = doc(db, 'purchases', purchaseId);
+      await updateDoc(purchaseRef, {
+        ...purchaseData,
+        updatedAt: Timestamp.now()
+      });
+    } catch (error) {
+      console.error('Error updating purchase:', error);
+      throw error;
+    }
+  },
+
+  // Eliminar compra
+  async deletePurchase(purchaseId: string): Promise<void> {
+    try {
+      const purchaseRef = doc(db, 'purchases', purchaseId);
+      await deleteDoc(purchaseRef);
+    } catch (error) {
+      console.error('Error deleting purchase:', error);
+      throw error;
+    }
+  }
+};
+
+// ============ STOCK MOVEMENTS SERVICE ============
+export const stockMovementService = {
+  // Obtener movimientos de stock
+  async getStockMovements(userId: string): Promise<StockMovement[]> {
+    try {
+      const movementsRef = collection(db, 'stock_movements');
+      const q = query(movementsRef, where('userId', '==', userId));
+      const querySnapshot = await getDocs(q);
+      
+      const movements = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as StockMovement));
+      
+      return movements.sort((a, b) => {
+        const aTime = a.createdAt?.toMillis() || 0;
+        const bTime = b.createdAt?.toMillis() || 0;
+        return bTime - aTime;
+      });
+    } catch (error) {
+      console.error('Error fetching stock movements:', error);
+      throw error;
+    }
+  },
+
+  // Obtener movimientos por item
+  async getMovementsByItem(itemId: string): Promise<StockMovement[]> {
+    try {
+      const movementsRef = collection(db, 'stock_movements');
+      const q = query(movementsRef, where('itemId', '==', itemId));
+      const querySnapshot = await getDocs(q);
+      
+      const movements = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as StockMovement));
+      
+      return movements.sort((a, b) => {
+        const aTime = a.createdAt?.toMillis() || 0;
+        const bTime = b.createdAt?.toMillis() || 0;
+        return bTime - aTime;
+      });
+    } catch (error) {
+      console.error('Error fetching movements by item:', error);
+      throw error;
+    }
+  },
+
+  // Crear movimiento de stock
+  async createStockMovement(movementData: Omit<StockMovement, 'id' | 'createdAt'>): Promise<string> {
+    try {
+      const movementsRef = collection(db, 'stock_movements');
+      const now = Timestamp.now();
+      
+      const docRef = await addDoc(movementsRef, {
+        ...movementData,
+        createdAt: now
+      });
+      
+      return docRef.id;
+    } catch (error) {
+      console.error('Error creating stock movement:', error);
       throw error;
     }
   }

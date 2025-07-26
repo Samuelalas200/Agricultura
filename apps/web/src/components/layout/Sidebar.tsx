@@ -4,6 +4,7 @@ import {
   MapPin, 
   Wheat, 
   CheckSquare, 
+  Package,
   LogOut,
   X
 } from 'lucide-react';
@@ -15,6 +16,7 @@ const navigation = [
   { name: 'Fincas', href: '/farms', icon: MapPin },
   { name: 'Cultivos', href: '/crops', icon: Wheat },
   { name: 'Tareas', href: '/tasks', icon: CheckSquare },
+  { name: 'Inventario', href: '/inventory', icon: Package },
 ];
 
 interface SidebarProps {

@@ -13,6 +13,8 @@ const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage'));
 const FarmsPage = lazy(() => import('@/pages/farms/FarmsPage'));
 const CropsPage = lazy(() => import('@/pages/crops/CropsPage'));
 const TasksPage = lazy(() => import('@/pages/tasks/TasksPage'));
+const InventoryPage = lazy(() => import('@/pages/inventory/InventoryPage'));
+const NewInventoryItemPage = lazy(() => import('@/pages/inventory/NewInventoryItemPage'));
 
 // Componente de Loading para Suspense
 function PageLoader() {
@@ -66,6 +68,16 @@ function App() {
                 <Route path="tasks" element={
                   <PageErrorBoundary>
                     <TasksPage />
+                  </PageErrorBoundary>
+                } />
+                <Route path="inventory" element={
+                  <PageErrorBoundary>
+                    <InventoryPage />
+                  </PageErrorBoundary>
+                } />
+                <Route path="inventory/new" element={
+                  <PageErrorBoundary>
+                    <NewInventoryItemPage />
                   </PageErrorBoundary>
                 } />
               </Route>
