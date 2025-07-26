@@ -15,6 +15,7 @@ import {
 import { useAuth } from '../../contexts/FirebaseAuthContext';
 import { inventoryService } from '../../services/firebaseService';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
+import { toast } from '../../components/ui/Toaster';
 
 export default function InventoryDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -38,6 +39,45 @@ export default function InventoryDetailPage() {
         alert('Error al eliminar el item');
       }
     }
+  };
+
+  // Función para ver historial de uso
+  const handleViewHistory = () => {
+    if (!item?.id) return;
+    navigate(`/inventory/${item.id}/movements`);
+  };
+
+  // Función para registrar movimiento
+  const handleRegisterMovement = () => {
+    if (!item?.id) return;
+    
+    // Simple prompt para demostrar funcionalidad
+    const type = prompt('Tipo de movimiento (entrada/salida/ajuste):');
+    if (!type || !['entrada', 'salida', 'ajuste'].includes(type)) {
+      toast.error('Tipo inválido', 'Debe ser: entrada, salida o ajuste');
+      return;
+    }
+    
+    const quantity = prompt(`Cantidad a ${type === 'entrada' ? 'agregar' : 'remover'}:`);
+    if (!quantity || isNaN(Number(quantity))) {
+      toast.error('Cantidad inválida', 'Debe ser un número válido');
+      return;
+    }
+    
+    const reason = prompt('Razón del movimiento:');
+    if (!reason) {
+      toast.error('Razón requerida', 'Debe especificar la razón del movimiento');
+      return;
+    }
+    
+    // Por ahora solo mostrar mensaje de éxito
+    toast.success('Movimiento registrado', `${type} de ${quantity} unidades: ${reason}`);
+  };
+
+  // Función para registrar compra
+  const handleRegisterPurchase = () => {
+    if (!item?.id) return;
+    navigate(`/inventory/purchases/new?itemId=${item.id}`);
   };
 
   const formatCurrency = (amount: number) => {
@@ -308,15 +348,24 @@ export default function InventoryDetailPage() {
             </div>
             
             <div className="space-y-2">
-              <button className="w-full btn btn-secondary text-left">
+              <button 
+                onClick={handleViewHistory}
+                className="w-full btn btn-secondary text-left"
+              >
                 <BarChart3 className="w-4 h-4 mr-2" />
                 Ver historial de uso
               </button>
-              <button className="w-full btn btn-secondary text-left">
+              <button 
+                onClick={handleRegisterMovement}
+                className="w-full btn btn-secondary text-left"
+              >
                 <History className="w-4 h-4 mr-2" />
                 Registrar movimiento
               </button>
-              <button className="w-full btn btn-secondary text-left">
+              <button 
+                onClick={handleRegisterPurchase}
+                className="w-full btn btn-secondary text-left"
+              >
                 <DollarSign className="w-4 h-4 mr-2" />
                 Registrar compra
               </button>

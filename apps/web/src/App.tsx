@@ -100,6 +100,16 @@ function App() {
                     <PurchasesPage />
                   </PageErrorBoundary>
                 } />
+                <Route path="inventory/purchases/new" element={
+                  <PageErrorBoundary>
+                    <PurchasesPage />
+                  </PageErrorBoundary>
+                } />
+                <Route path="inventory/:id/movements" element={
+                  <PageErrorBoundary>
+                    <MovementsPage />
+                  </PageErrorBoundary>
+                } />
                 <Route path="inventory/movements" element={
                   <PageErrorBoundary>
                     <MovementsPage />

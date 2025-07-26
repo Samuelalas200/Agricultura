@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, ArrowUpRight, ArrowDownRight, Package, FileText, Eye, Plus } from 'lucide-react';
+import { useParams, Link } from 'react-router-dom';
+import { Search, Filter, ArrowUpRight, ArrowDownRight, Package, FileText, Eye, Plus, ArrowLeft } from 'lucide-react';
 import { inventoryService, InventoryItem } from '../../services/firebaseService';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 
@@ -19,8 +20,10 @@ interface Movement {
 }
 
 export default function MovementsPage() {
+  const { id: itemId } = useParams<{ id: string }>(); // Para cuando vienen desde detalles de item
   const [movements, setMovements] = useState<Movement[]>([]);
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+  const [currentItem, setCurrentItem] = useState<InventoryItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('all');
@@ -36,6 +39,13 @@ export default function MovementsPage() {
       setLoading(true);
       const items = await inventoryService.getInventoryItems('user-id');
       setInventoryItems(items);
+      
+      // Si hay un itemId específico, cargar ese item
+      if (itemId) {
+        const item = await inventoryService.getInventoryItem(itemId);
+        setCurrentItem(item);
+        setSelectedItem(itemId); // Filtrar automáticamente por este item
+      }
       
       // Simular datos de movimientos por ahora
       const mockMovements: Movement[] = [
@@ -178,10 +188,29 @@ export default function MovementsPage() {
         <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl p-6 mb-6 border border-white/20">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-                Movimientos de Inventario
-              </h1>
-              <p className="text-gray-600 mt-1">Historial de entradas, salidas y ajustes de inventario</p>
+              {currentItem ? (
+                <>
+                  <div className="flex items-center gap-3 mb-2">
+                    <Link 
+                      to={`/inventory/${currentItem.id}`}
+                      className="text-gray-500 hover:text-gray-700 transition-colors"
+                    >
+                      <ArrowLeft className="w-5 h-5" />
+                    </Link>
+                    <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+                      Movimientos de {currentItem.name}
+                    </h1>
+                  </div>
+                  <p className="text-gray-600">Historial completo de movimientos para este item</p>
+                </>
+              ) : (
+                <>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+                    Movimientos de Inventario
+                  </h1>
+                  <p className="text-gray-600 mt-1">Historial de entradas, salidas y ajustes de inventario</p>
+                </>
+              )}
             </div>
             <button
               onClick={() => alert('Nuevo movimiento - Funcionalidad próximamente')}

@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from 'react-query';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { 
   ShoppingCart, 
   Plus, 
@@ -17,11 +17,23 @@ import { purchasesService, inventoryService } from '../../services/firebaseServi
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { PurchasesList } from '../../components/inventory/PurchasesList';
 import { PurchasesStats } from '../../components/inventory/PurchasesStats';
+import { toast } from '../../components/ui/Toaster';
 
 export default function PurchasesPage() {
   const { currentUser } = useAuth();
+  const [searchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPeriod, setSelectedPeriod] = useState('all');
+  const [selectedItemId, setSelectedItemId] = useState('all');
+
+  // Verificar si hay un itemId en los parámetros de URL
+  useEffect(() => {
+    const itemId = searchParams.get('itemId');
+    if (itemId) {
+      setSelectedItemId(itemId);
+      toast.info('Nueva compra', `Registrando compra para el item seleccionado`);
+    }
+  }, [searchParams]);
 
   // Queries
   const { data: purchases = [], isLoading: purchasesLoading, refetch: refetchPurchases } = useQuery(
@@ -135,11 +147,18 @@ export default function PurchasesPage() {
             Reportes
           </Link>
           <button
-            onClick={() => alert('Nueva compra - Funcionalidad próximamente')}
-            className="btn btn-primary"
+            onClick={() => {
+              const itemId = searchParams.get('itemId');
+              if (itemId) {
+                toast.info('Próximamente', `Funcionalidad de nueva compra para item específico estará disponible pronto`);
+              } else {
+                toast.info('Próximamente', 'Funcionalidad de nueva compra estará disponible pronto');
+              }
+            }}
+            className={`btn ${searchParams.get('itemId') ? 'btn-success' : 'btn-primary'}`}
           >
             <Plus className="w-4 h-4 mr-2" />
-            Nueva Compra
+            {searchParams.get('itemId') ? 'Registrar Compra del Item' : 'Nueva Compra'}
           </button>
         </div>
       </div>
@@ -253,11 +272,18 @@ export default function PurchasesPage() {
             Comienza registrando tu primera compra de insumos
           </p>
           <button
-            onClick={() => alert('Nueva compra - Funcionalidad próximamente')}
-            className="btn btn-primary"
+            onClick={() => {
+              const itemId = searchParams.get('itemId');
+              if (itemId) {
+                toast.info('Próximamente', `Funcionalidad de nueva compra para item específico estará disponible pronto`);
+              } else {
+                toast.info('Próximamente', 'Funcionalidad de nueva compra estará disponible pronto');
+              }
+            }}
+            className={`btn ${searchParams.get('itemId') ? 'btn-success' : 'btn-primary'}`}
           >
             <Plus className="w-4 h-4 mr-2" />
-            Registrar primera compra
+            {searchParams.get('itemId') ? 'Registrar Compra del Item' : 'Registrar primera compra'}
           </button>
         </div>
       )}
