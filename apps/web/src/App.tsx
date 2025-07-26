@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/FirebaseAuthContext';
+import { ThemeProvider } from '@/contexts/ThemeContext';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Toaster } from '@/components/ui/Toaster';
 import { ErrorBoundary, PageErrorBoundary } from '@/components/ErrorBoundary';
@@ -38,10 +39,11 @@ function PageLoader() {
 function App() {
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-gray-50">
-        <AuthProvider>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-secondary)' }}>
+        <ThemeProvider>
+          <AuthProvider>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
               {/* Rutas públicas */}
               <Route path="/login" element={
                 <PageErrorBoundary>
@@ -141,7 +143,8 @@ function App() {
           
           <Toaster />
         </AuthProvider>
-      </div>
+      </ThemeProvider>
+    </div>
     </ErrorBoundary>
   );
 }

@@ -20,6 +20,29 @@
   --chart-accent: #8b5cf6;
   --chart-warning: #f59e0b;
   --chart-error: #ef4444;
+
+  /* Variables para tema claro */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9fafb;
+  --bg-tertiary: #f3f4f6;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9ca3af;
+  --border-primary: #e5e7eb;
+  --border-secondary: #d1d5db;
+}
+
+/* Variables para tema oscuro */
+.dark {
+  --bg-primary: #1f2937;
+  --bg-secondary: #111827;
+  --bg-tertiary: #374151;
+  --text-primary: #f9fafb;
+  --text-secondary: #d1d5db;
+  --text-tertiary: #9ca3af;
+  --border-primary: #374151;
+  --border-secondary: #4b5563;
+  --shadow-soft: 0 2px 15px -3px rgba(0, 0, 0, 0.3), 0 10px 20px -2px rgba(0, 0, 0, 0.2);
 }
 
 /* Base styles */
@@ -38,8 +61,9 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
-  background-color: #f9fafb;
-  color: #111827;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 #root {
@@ -91,19 +115,30 @@ body {
   }
 
   .card {
-    @apply bg-white rounded-lg shadow-soft border border-gray-200 p-6;
+    background-color: var(--bg-primary);
+    border-radius: 0.5rem;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--border-primary);
+    padding: 1.5rem;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
   }
 
   .card-header {
-    @apply mb-4 pb-4 border-b border-gray-200;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-primary);
   }
 
   .card-title {
-    @apply text-lg font-semibold text-gray-900;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
   }
 
   .card-description {
-    @apply text-sm text-gray-600 mt-1;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
   }
 
   .badge {
@@ -173,11 +208,89 @@ body {
 }
 
 /* Modo oscuro (preparado para futuro) */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-background: #111827;
-    --color-foreground: #f9fafb;
-  }
+.dark {
+  --bg-primary: #1f2937;
+  --bg-secondary: #111827;
+  --bg-tertiary: #374151;
+  --text-primary: #f9fafb;
+  --text-secondary: #d1d5db;
+  --text-tertiary: #9ca3af;
+  --border-primary: #374151;
+  --border-secondary: #4b5563;
+  --shadow-soft: 0 2px 15px -3px rgba(0, 0, 0, 0.3), 0 10px 20px -2px rgba(0, 0, 0, 0.2);
+}
+
+/* Utilidades para modo oscuro */
+.dark .text-gray-900 {
+  color: var(--text-primary) !important;
+}
+
+.dark .text-gray-700 {
+  color: var(--text-secondary) !important;
+}
+
+.dark .text-gray-600 {
+  color: var(--text-secondary) !important;
+}
+
+.dark .text-gray-500 {
+  color: var(--text-tertiary) !important;
+}
+
+.dark .bg-white {
+  background-color: var(--bg-primary) !important;
+}
+
+.dark .bg-gray-50 {
+  background-color: var(--bg-secondary) !important;
+}
+
+.dark .bg-gray-100 {
+  background-color: var(--bg-tertiary) !important;
+}
+
+.dark .border-gray-200 {
+  border-color: var(--border-primary) !important;
+}
+
+.dark .border-gray-300 {
+  border-color: var(--border-secondary) !important;
+}
+
+/* Inputs y forms en modo oscuro */
+.dark .input,
+.dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="tel"],
+.dark input[type="password"],
+.dark select,
+.dark textarea {
+  background-color: var(--bg-tertiary) !important;
+  border-color: var(--border-secondary) !important;
+  color: var(--text-primary) !important;
+}
+
+.dark .input::placeholder,
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: var(--text-tertiary) !important;
+}
+
+/* Botones en modo oscuro */
+.dark .btn-secondary {
+  background-color: var(--bg-tertiary) !important;
+  border-color: var(--border-secondary) !important;
+  color: var(--text-primary) !important;
+}
+
+.dark .btn-secondary:hover {
+  background-color: var(--bg-primary) !important;
+}
+
+/* Badges en modo oscuro */
+.dark .badge-info {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+  color: #93c5fd !important;
 }
 
 /* Responsive */

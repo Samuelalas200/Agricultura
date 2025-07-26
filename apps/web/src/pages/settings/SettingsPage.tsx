@@ -17,11 +17,13 @@ import {
   Trash2
 } from 'lucide-react';
 import { useAuth } from '../../contexts/FirebaseAuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { updateProfile } from 'firebase/auth';
 import { toast } from '../../components/ui/Toaster';
 
 export default function SettingsPage() {
   const { currentUser } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [activeTab, setActiveTab] = useState('profile');
   const [formData, setFormData] = useState({
     displayName: currentUser?.displayName || '',
@@ -31,7 +33,6 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState({
     emailNotifications: localStorage.getItem('emailNotifications') !== 'false',
     inventoryAlerts: localStorage.getItem('inventoryAlerts') !== 'false',
-    theme: localStorage.getItem('theme') || 'light',
     language: localStorage.getItem('language') || 'es',
   });
 
@@ -60,6 +61,11 @@ export default function SettingsPage() {
     localStorage.setItem(key, value.toString());
     setSettings(prev => ({ ...prev, [key]: value }));
     toast.success('Configuración guardada', 'Los cambios se han aplicado');
+  };
+
+  const handleThemeChange = (newTheme: 'light' | 'dark') => {
+    setTheme(newTheme);
+    toast.success('Tema actualizado', `Tema ${newTheme === 'light' ? 'claro' : 'oscuro'} aplicado`);
   };
 
   const handlePasswordReset = () => {
@@ -247,18 +253,18 @@ export default function SettingsPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-3">Tema</label>
                     <div className="grid grid-cols-2 gap-3">
                       <button
-                        onClick={() => handleSaveSettings('theme', 'light')}
+                        onClick={() => handleThemeChange('light')}
                         className={`p-4 border-2 rounded-lg flex items-center space-x-3 ${
-                          settings.theme === 'light' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                          theme === 'light' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
                         }`}
                       >
                         <Sun className="w-5 h-5" />
                         <span>Claro</span>
                       </button>
                       <button
-                        onClick={() => handleSaveSettings('theme', 'dark')}
+                        onClick={() => handleThemeChange('dark')}
                         className={`p-4 border-2 rounded-lg flex items-center space-x-3 ${
-                          settings.theme === 'dark' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                          theme === 'dark' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
                         }`}
                       >
                         <Moon className="w-5 h-5" />
