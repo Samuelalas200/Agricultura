@@ -15,6 +15,11 @@ const CropsPage = lazy(() => import('@/pages/crops/CropsPage'));
 const TasksPage = lazy(() => import('@/pages/tasks/TasksPage'));
 const InventoryPage = lazy(() => import('@/pages/inventory/InventoryPage'));
 const NewInventoryItemPage = lazy(() => import('@/pages/inventory/NewInventoryItemPage'));
+const InventoryDetailPage = lazy(() => import('@/pages/inventory/InventoryDetailPage'));
+const EditInventoryItemPage = lazy(() => import('@/pages/inventory/EditInventoryItemPage'));
+const PurchasesPage = lazy(() => import('@/pages/inventory/PurchasesPage'));
+const MovementsPage = lazy(() => import('@/pages/inventory/MovementsPage'));
+const ReportsPage = lazy(() => import('@/pages/inventory/ReportsPage'));
 
 // Componente de Loading para Suspense
 function PageLoader() {
@@ -78,6 +83,31 @@ function App() {
                 <Route path="inventory/new" element={
                   <PageErrorBoundary>
                     <NewInventoryItemPage />
+                  </PageErrorBoundary>
+                } />
+                <Route path="inventory/:id" element={
+                  <PageErrorBoundary>
+                    <InventoryDetailPage />
+                  </PageErrorBoundary>
+                } />
+                <Route path="inventory/:id/edit" element={
+                  <PageErrorBoundary>
+                    <EditInventoryItemPage />
+                  </PageErrorBoundary>
+                } />
+                <Route path="inventory/purchases" element={
+                  <PageErrorBoundary>
+                    <PurchasesPage />
+                  </PageErrorBoundary>
+                } />
+                <Route path="inventory/movements" element={
+                  <PageErrorBoundary>
+                    <MovementsPage />
+                  </PageErrorBoundary>
+                } />
+                <Route path="inventory/reports" element={
+                  <PageErrorBoundary>
+                    <ReportsPage />
                   </PageErrorBoundary>
                 } />
               </Route>

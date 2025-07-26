@@ -128,19 +128,19 @@ export default function PurchasesPage() {
         </div>
         <div className="flex items-center space-x-3">
           <Link
-            to="/inventory/reports?tab=purchases"
+            to="/inventory/reports"
             className="btn btn-secondary"
           >
             <FileText className="w-4 h-4 mr-2" />
             Reportes
           </Link>
-          <Link
-            to="/inventory/purchase/new"
+          <button
+            onClick={() => alert('Nueva compra - Funcionalidad próximamente')}
             className="btn btn-primary"
           >
             <Plus className="w-4 h-4 mr-2" />
             Nueva Compra
-          </Link>
+          </button>
         </div>
       </div>
 
@@ -252,21 +252,21 @@ export default function PurchasesPage() {
           <p className="text-gray-500 mb-4">
             Comienza registrando tu primera compra de insumos
           </p>
-          <Link
-            to="/inventory/purchase/new"
+          <button
+            onClick={() => alert('Nueva compra - Funcionalidad próximamente')}
             className="btn btn-primary"
           >
             <Plus className="w-4 h-4 mr-2" />
             Registrar primera compra
-          </Link>
+          </button>
         </div>
       )}
 
       {/* Acciones rápidas */}
       {purchases.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Link
-            to="/inventory/purchase/bulk"
+          <button
+            onClick={() => alert('Compra masiva - Funcionalidad próximamente')}
             className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200"
           >
             <Package className="w-8 h-8 text-blue-600 mr-3" />
@@ -274,10 +274,10 @@ export default function PurchasesPage() {
               <p className="font-medium text-gray-900">Compra Masiva</p>
               <p className="text-sm text-gray-600">Registrar múltiples items</p>
             </div>
-          </Link>
+          </button>
           
-          <Link
-            to="/inventory/suppliers"
+          <button
+            onClick={() => alert('Gestión de proveedores - Funcionalidad próximamente')}
             className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200"
           >
             <ShoppingCart className="w-8 h-8 text-green-600 mr-3" />
@@ -285,7 +285,7 @@ export default function PurchasesPage() {
               <p className="font-medium text-gray-900">Gestionar Proveedores</p>
               <p className="text-sm text-gray-600">Contactos y precios</p>
             </div>
-          </Link>
+          </button>
           
           <Link
             to="/inventory/reports"

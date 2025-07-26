@@ -1,7 +1,7 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Edit2, Trash2, Package, AlertTriangle, Calendar, MapPin } from 'lucide-react';
 import { InventoryItem } from '../../services/firebaseService';
-import { Link } from 'react-router-dom';
 
 interface InventoryGridProps {
   items: InventoryItem[];
@@ -274,19 +274,24 @@ export function InventoryGrid({ items }: InventoryGridProps) {
                 <div className="flex items-center justify-between pt-4 border-t">
                   <Link
                     to={`/inventory/${item.id}/edit`}
-                    className="text-blue-600 hover:text-blue-500 p-1"
+                    className="text-blue-600 hover:text-blue-500 p-1 transition-colors"
                     title="Editar"
                   >
                     <Edit2 className="w-4 h-4" />
                   </Link>
                   <Link
                     to={`/inventory/${item.id}`}
-                    className="text-sm font-medium text-primary-600 hover:text-primary-500"
+                    className="text-sm font-medium text-primary-600 hover:text-primary-500 transition-colors"
                   >
                     Ver detalles
                   </Link>
                   <button
-                    className="text-red-600 hover:text-red-500 p-1"
+                    onClick={() => {
+                      if (confirm(`¿Estás seguro de eliminar "${item.name}"?`)) {
+                        alert('Funcionalidad de eliminar próximamente');
+                      }
+                    }}
+                    className="text-red-600 hover:text-red-500 p-1 transition-colors"
                     title="Eliminar"
                   >
                     <Trash2 className="w-4 h-4" />
