@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -32,6 +32,7 @@ type InventoryItemForm = z.infer<typeof inventoryItemSchema>;
 export default function NewInventoryItemPage() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Query para obtener fincas
@@ -64,7 +65,8 @@ export default function NewInventoryItemPage() {
     
     setIsSubmitting(true);
     try {
-      const itemData = {
+      // Crear el objeto base sin campos undefined
+      const itemData: any = {
         name: data.name,
         category: data.category,
         brand: data.brand || '',
@@ -74,15 +76,26 @@ export default function NewInventoryItemPage() {
         minStock: data.minStock,
         cost: data.cost,
         supplier: data.supplier || '',
-        purchaseDate: data.purchaseDate ? Timestamp.fromDate(new Date(data.purchaseDate)) : undefined,
-        expirationDate: data.expirationDate ? Timestamp.fromDate(new Date(data.expirationDate)) : undefined,
         location: data.location || '',
         farmId: data.farmId || '',
         userId: currentUser.uid,
         isActive: true,
       };
+
+      // Solo agregar campos de fecha si tienen valor
+      if (data.purchaseDate) {
+        itemData.purchaseDate = Timestamp.fromDate(new Date(data.purchaseDate));
+      }
+      
+      if (data.expirationDate) {
+        itemData.expirationDate = Timestamp.fromDate(new Date(data.expirationDate));
+      }
       
       await inventoryService.createInventoryItem(itemData);
+      
+      // Invalidar las queries del cache para que se refresquen
+      await queryClient.invalidateQueries(['inventory', currentUser.uid]);
+      await queryClient.invalidateQueries(['lowStock', currentUser.uid]);
       
       toast.success('¡Item creado!', 'El item ha sido agregado al inventario exitosamente');
       navigate('/inventory');

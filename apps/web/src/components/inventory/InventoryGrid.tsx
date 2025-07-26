@@ -1,15 +1,20 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Edit2, Trash2, Package, AlertTriangle, Calendar, MapPin } from 'lucide-react';
-import { InventoryItem } from '../../services/firebaseService';
+import { Edit2, Trash2, Package, AlertTriangle, Calendar, MapPin, FileText } from 'lucide-react';
+import { InventoryItem, inventoryService } from '../../services/firebaseService';
+import { PDFExportService } from '../../services/pdfExportService';
+import { useAuth } from '../../contexts/FirebaseAuthContext';
+import { toast } from '../ui/Toaster';
 
 interface InventoryGridProps {
   items: InventoryItem[];
   onRefresh: () => void;
 }
 
-export function InventoryGrid({ items }: InventoryGridProps) {
+export function InventoryGrid({ items, onRefresh }: InventoryGridProps) {
+  const { currentUser } = useAuth();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-CO', {
@@ -95,6 +100,81 @@ export function InventoryGrid({ items }: InventoryGridProps) {
     }
   };
 
+  // Exportar items seleccionados a PDF
+  const handleExportSelected = () => {
+    const selectedInventoryItems = items.filter(item => selectedItems.includes(item.id!));
+    
+    if (selectedInventoryItems.length === 0) {
+      toast.warning('Sin selección', 'No hay items seleccionados para exportar');
+      return;
+    }
+
+    // Convertir al formato esperado por PDFExportService
+    const pdfItems = selectedInventoryItems.map(item => ({
+      id: item.id!,
+      name: item.name,
+      category: item.category,
+      quantity: item.quantity,
+      unit: item.unit,
+      price: item.cost, // usar cost como price
+      location: item.location || '',
+      status: item.quantity <= item.minStock ? 'bajo_stock' as const : 'disponible' as const,
+      lastUpdated: new Date()
+    }));
+
+    PDFExportService.exportInventoryReport(pdfItems);
+    toast.success('PDF generado', `Se exportaron ${selectedInventoryItems.length} items`);
+  };
+
+  // Eliminar items seleccionados
+  const handleDeleteSelected = async () => {
+    if (!currentUser) return;
+    
+    const confirmMessage = `¿Estás seguro de eliminar ${selectedItems.length} item${selectedItems.length > 1 ? 's' : ''}?\n\nEsta acción no se puede deshacer.`;
+    
+    if (!confirm(confirmMessage)) return;
+
+    setIsDeleting(true);
+    try {
+      // Eliminar cada item seleccionado
+      const deletePromises = selectedItems.map(itemId => 
+        inventoryService.deleteInventoryItem(itemId)
+      );
+      
+      await Promise.all(deletePromises);
+      
+      toast.success('Items eliminados', `Se eliminaron ${selectedItems.length} items exitosamente`);
+      setSelectedItems([]); // Limpiar selección
+      onRefresh(); // Refrescar la lista
+    } catch (error: any) {
+      toast.error('Error al eliminar', error.message || 'No se pudieron eliminar algunos items');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Editar en lote (por ahora solo mostramos mensaje)
+  const handleBulkEdit = () => {
+    toast.info('Próximamente', 'La funcionalidad de edición en lote estará disponible pronto');
+  };
+
+  // Eliminar un item individual
+  const handleDeleteItem = async (item: InventoryItem) => {
+    if (!currentUser) return;
+    
+    if (!confirm(`¿Estás seguro de eliminar "${item.name}"?\n\nEsta acción no se puede deshacer.`)) {
+      return;
+    }
+
+    try {
+      await inventoryService.deleteInventoryItem(item.id!);
+      toast.success('Item eliminado', `"${item.name}" fue eliminado exitosamente`);
+      onRefresh(); // Refrescar la lista
+    } catch (error: any) {
+      toast.error('Error al eliminar', error.message || 'No se pudo eliminar el item');
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Acciones en lote */}
@@ -105,15 +185,29 @@ export function InventoryGrid({ items }: InventoryGridProps) {
               {selectedItems.length} item{selectedItems.length > 1 ? 's' : ''} seleccionado{selectedItems.length > 1 ? 's' : ''}
             </p>
             <div className="flex items-center space-x-2">
-              <button className="btn btn-sm btn-secondary">
+              <button 
+                onClick={handleExportSelected}
+                className="btn btn-sm btn-secondary flex items-center gap-1"
+                title="Exportar items seleccionados a PDF"
+              >
+                <FileText className="w-4 h-4" />
                 Exportar
               </button>
-              <button className="btn btn-sm btn-warning">
+              <button 
+                onClick={handleBulkEdit}
+                className="btn btn-sm btn-warning"
+                title="Editar múltiples items"
+              >
                 Editar en lote
               </button>
-              <button className="btn btn-sm btn-error">
-                <Trash2 className="w-4 h-4 mr-1" />
-                Eliminar
+              <button 
+                onClick={handleDeleteSelected}
+                disabled={isDeleting}
+                className="btn btn-sm btn-error flex items-center gap-1"
+                title="Eliminar items seleccionados"
+              >
+                <Trash2 className="w-4 h-4" />
+                {isDeleting ? 'Eliminando...' : 'Eliminar'}
               </button>
             </div>
           </div>
@@ -286,11 +380,7 @@ export function InventoryGrid({ items }: InventoryGridProps) {
                     Ver detalles
                   </Link>
                   <button
-                    onClick={() => {
-                      if (confirm(`¿Estás seguro de eliminar "${item.name}"?`)) {
-                        alert('Funcionalidad de eliminar próximamente');
-                      }
-                    }}
+                    onClick={() => handleDeleteItem(item)}
                     className="text-red-600 hover:text-red-500 p-1 transition-colors"
                     title="Eliminar"
                   >
