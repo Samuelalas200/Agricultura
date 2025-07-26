@@ -1,0 +1,30 @@
+{
+  "name": "@campo360/lib",
+  "version": "1.0.0",
+  "description": "Tipos y utilidades compartidas para Campo360 Manager",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "clean": "rm -rf dist",
+    "test": "echo \"No tests yet\""
+  },
+  "devDependencies": {
+    "tsup": "^7.2.0",
+    "typescript": "^5.1.6"
+  },
+  "files": [
+    "dist"
+  ]
+}

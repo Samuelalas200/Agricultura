@@ -1,0 +1,113 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  firstName String
+  lastName  String
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relaciones
+  farms Farm[]
+  assignedTasks Task[] @relation("TaskAssignedUser")
+
+  @@map("users")
+}
+
+model Farm {
+  id          String   @id @default(cuid())
+  name        String
+  location    String
+  totalArea   Float    // en hectáreas
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relaciones
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  crops   Crop[]
+  parcels Parcel[]
+  tasks   Task[]
+
+  @@map("farms")
+}
+
+model Parcel {
+  id       String  @id @default(cuid())
+  name     String
+  area     Float   // en hectáreas
+  soilType String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relaciones
+  farmId String
+  farm   Farm   @relation(fields: [farmId], references: [id], onDelete: Cascade)
+
+  crops Crop[]
+
+  @@map("parcels")
+}
+
+model Crop {
+  id                  String     @id @default(cuid())
+  name                String
+  variety             String
+  plantingDate        DateTime
+  expectedHarvestDate DateTime?
+  actualHarvestDate   DateTime?
+  area                Float      // en hectáreas
+  status              String @default("PLANNED")
+  notes               String?
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  // Relaciones
+  farmId   String
+  farm     Farm    @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  parcelId String?
+  parcel   Parcel? @relation(fields: [parcelId], references: [id], onDelete: SetNull)
+
+  tasks Task[]
+
+  @@map("crops")
+}
+
+model Task {
+  id                String       @id @default(cuid())
+  title             String
+  description       String?
+  type              String
+  status            String   @default("PENDING")
+  scheduledDate     DateTime
+  completedDate     DateTime?
+  priority          String @default("MEDIUM")
+  estimatedDuration Int?         // en minutos
+  actualDuration    Int?         // en minutos
+  cost              Float?
+  notes             String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  // Relaciones
+  cropId         String?
+  crop           Crop?   @relation(fields: [cropId], references: [id], onDelete: SetNull)
+  farmId         String
+  farm           Farm    @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  assignedUserId String
+  assignedUser   User    @relation("TaskAssignedUser", fields: [assignedUserId], references: [id], onDelete: Cascade)
+
+  @@map("tasks")
+}
