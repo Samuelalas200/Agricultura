@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { BarChart3, PieChart, TrendingUp, Download, Calendar, Filter, Package, DollarSign, AlertTriangle, CheckCircle } from 'lucide-react';
+import { BarChart3, PieChart, TrendingUp, Calendar, Filter, Package, DollarSign, AlertTriangle, CheckCircle } from 'lucide-react';
 import { inventoryService } from '../../services/firebaseService';
+import { PDFExportService } from '../../services/pdfExportService';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 
 interface ReportData {
@@ -68,8 +69,147 @@ export default function ReportsPage() {
     }
   };
 
-  const exportReport = () => {
-    alert('Exportar reporte - Funcionalidad próximamente');
+  const exportReport = (type: 'inventory' | 'purchases' | 'movements') => {
+    switch (type) {
+      case 'inventory':
+        const inventoryData = [
+          {
+            id: '1',
+            name: 'Semillas de Maíz Premium',
+            category: 'Semillas',
+            quantity: 150,
+            unit: 'kg',
+            price: 45,
+            location: 'Almacén A - Sector 1',
+            status: 'disponible' as const,
+            lastUpdated: new Date()
+          },
+          {
+            id: '2',
+            name: 'Fertilizante NPK 20-20-20',
+            category: 'Fertilizantes',
+            quantity: 8,
+            unit: 'sacos',
+            price: 89,
+            location: 'Almacén B - Sector 2',
+            status: 'bajo_stock' as const,
+            lastUpdated: new Date()
+          },
+          {
+            id: '3',
+            name: 'Pesticida Orgánico',
+            category: 'Pesticidas',
+            quantity: 0,
+            unit: 'litros',
+            price: 125,
+            location: 'Almacén C - Sector 1',
+            status: 'agotado' as const,
+            lastUpdated: new Date()
+          },
+          {
+            id: '4',
+            name: 'Herramientas de Cultivo',
+            category: 'Herramientas',
+            quantity: 25,
+            unit: 'piezas',
+            price: 35,
+            location: 'Almacén D - Sector 3',
+            status: 'disponible' as const,
+            lastUpdated: new Date()
+          }
+        ];
+        PDFExportService.exportInventoryReport(inventoryData);
+        break;
+      
+      case 'purchases':
+        const purchasesData = [
+          {
+            id: '1',
+            supplier: 'AgroSupplies SA',
+            items: [
+              { name: 'Semillas de Maíz', quantity: 100, price: 45, total: 4500 },
+              { name: 'Fertilizante', quantity: 20, price: 89, total: 1780 }
+            ],
+            total: 6280,
+            date: new Date(),
+            status: 'completado' as const
+          },
+          {
+            id: '2',
+            supplier: 'FarmTech Solutions',
+            items: [
+              { name: 'Pesticida Orgánico', quantity: 50, price: 125, total: 6250 }
+            ],
+            total: 6250,
+            date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+            status: 'pendiente' as const
+          },
+          {
+            id: '3',
+            supplier: 'Distribuidora Agrícola Norte',
+            items: [
+              { name: 'Herbicida Selectivo', quantity: 30, price: 78, total: 2340 },
+              { name: 'Fungicida Preventivo', quantity: 15, price: 156, total: 2340 }
+            ],
+            total: 4680,
+            date: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
+            status: 'completado' as const
+          }
+        ];
+        PDFExportService.exportPurchasesReport(purchasesData);
+        break;
+      
+      case 'movements':
+        const movementsData = [
+          {
+            id: '1',
+            itemName: 'Semillas de Maíz Premium',
+            type: 'entrada' as const,
+            quantity: 100,
+            reason: 'Compra nueva mercancía',
+            date: new Date(),
+            user: 'Juan Pérez'
+          },
+          {
+            id: '2',
+            itemName: 'Fertilizante NPK',
+            type: 'salida' as const,
+            quantity: 15,
+            reason: 'Aplicación en campo norte',
+            date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+            user: 'María González'
+          },
+          {
+            id: '3',
+            itemName: 'Pesticida Orgánico',
+            type: 'ajuste' as const,
+            quantity: -5,
+            reason: 'Ajuste por inventario físico',
+            date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+            user: 'Carlos Rodríguez'
+          },
+          {
+            id: '4',
+            itemName: 'Herramientas de Cultivo',
+            type: 'entrada' as const,
+            quantity: 10,
+            reason: 'Reposición de herramientas',
+            date: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+            user: 'Ana Martínez'
+          },
+          {
+            id: '5',
+            itemName: 'Semillas de Tomate',
+            type: 'salida' as const,
+            quantity: 25,
+            reason: 'Siembra temporada alta',
+            date: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000),
+            user: 'Luis Silva'
+          }
+        ];
+        PDFExportService.exportMovementsReport(movementsData);
+        break;
+    }
   };
 
   if (loading) {
@@ -100,13 +240,35 @@ export default function ReportsPage() {
               </h1>
               <p className="text-gray-600 mt-1">Análisis y estadísticas del inventario</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-3">
+              {/* Botón principal de Inventario */}
               <button
-                onClick={exportReport}
-                className="bg-gradient-to-r from-green-600 to-blue-600 text-white px-6 py-3 rounded-xl hover:from-green-700 hover:to-blue-700 transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105"
+                onClick={() => exportReport('inventory')}
+                className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-3 rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105"
               >
-                <Download className="w-5 h-5" />
-                Exportar
+                <Package className="w-5 h-5" />
+                <span className="hidden sm:inline">Exportar Inventario</span>
+                <span className="sm:hidden">Inventario</span>
+              </button>
+              
+              {/* Botón de Compras */}
+              <button
+                onClick={() => exportReport('purchases')}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                <DollarSign className="w-5 h-5" />
+                <span className="hidden sm:inline">Exportar Compras</span>
+                <span className="sm:hidden">Compras</span>
+              </button>
+              
+              {/* Botón de Movimientos */}
+              <button
+                onClick={() => exportReport('movements')}
+                className="bg-gradient-to-r from-purple-600 to-violet-600 text-white px-6 py-3 rounded-xl hover:from-purple-700 hover:to-violet-700 transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                <TrendingUp className="w-5 h-5" />
+                <span className="hidden sm:inline">Exportar Movimientos</span>
+                <span className="sm:hidden">Movimientos</span>
               </button>
             </div>
           </div>
