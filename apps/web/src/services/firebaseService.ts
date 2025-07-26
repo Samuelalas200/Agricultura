@@ -304,6 +304,20 @@ export const cropsService = {
       console.error('Error deleting crop:', error);
       throw error;
     }
+  },
+
+  // Actualizar solo el estado de un cultivo
+  async updateCropStatus(cropId: string, status: 'planted' | 'growing' | 'ready' | 'harvested'): Promise<void> {
+    try {
+      const cropRef = doc(db, 'crops', cropId);
+      await updateDoc(cropRef, {
+        status,
+        updatedAt: Timestamp.now()
+      });
+    } catch (error) {
+      console.error('Error updating crop status:', error);
+      throw error;
+    }
   }
 };
 
