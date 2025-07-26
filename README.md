@@ -1,33 +1,31 @@
 # Campo360 Manager 🌱
 
-Sistema completo de gestión agrícola desarrollado con tecnologías modernas.
+Sistema completo de gestión agrícola desarrollado con tecnologías modernas y cloud-native.
 
 ## 🚀 Tecnologías
 
-### Backend
-- **NestJS** - Framework Node.js para APIs robustas
-- **Prisma ORM** - Manejo de base de datos type-safe
-- **SQLite** - Base de datos ligera y eficiente
-- **JWT** - Autenticación segura
-- **TypeScript** - Tipado estático
+### Backend (Cloud)
+- **Firebase Auth** - Autenticación robusta y escalable
+- **Firebase Firestore** - Base de datos NoSQL en tiempo real
+- **Firebase Analytics** - Métricas y análisis integrado
 
 ### Frontend
-- **React 18** - Biblioteca de interfaz de usuario
-- **Vite** - Build tool rápido y moderno
+- **React 18** - Biblioteca de interfaz de usuario moderna
+- **Vite** - Build tool rápido con HMR
 - **TypeScript** - Desarrollo type-safe
 - **Tailwind CSS** - Framework de estilos utility-first
-- **React Hook Form** - Manejo de formularios
+- **React Hook Form** - Manejo de formularios performante
 - **React Query** - Gestión de estado del servidor
+- **PWA** - Progressive Web App con service workers
 
 ## 📦 Estructura del Proyecto
 
 ```
 Campo360 Manager/
 ├── apps/
-│   ├── api/          # Backend NestJS
-│   └── web/          # Frontend React
+│   └── web/          # Frontend React + PWA
 ├── packages/
-│   └── lib/          # Librería compartida
+│   └── lib/          # Librería compartida de tipos
 └── docs/             # Documentación
 ```
 
@@ -36,6 +34,7 @@ Campo360 Manager/
 ### Prerrequisitos
 - Node.js 18+ 
 - pnpm (recomendado)
+- Cuenta de Firebase (para configuración)
 
 ### Instalación
 ```bash
@@ -47,155 +46,159 @@ cd Agricultura
 pnpm install
 
 # Configurar variables de entorno
-# Backend
-cp apps/api/.env.example apps/api/.env
-# Frontend
 cp apps/web/.env.example apps/web/.env.local
 
-# Configurar base de datos
-cd apps/api
-pnpm prisma generate
-pnpm prisma db push
-pnpm prisma db seed
-
-# Volver al directorio raíz
-cd ../..
+# Editar .env.local con tus credenciales de Firebase
+# Las credenciales por defecto son para desarrollo
 ```
 
 ## 🏃‍♂️ Ejecutar el Proyecto
 
 ```bash
-# Ejecutar todo el proyecto (backend + frontend)
+# Ejecutar el proyecto
+cd apps/web
 pnpm run dev
 ```
 
 Esto iniciará:
-- **Backend**: http://localhost:3001
-- **Frontend**: http://localhost:5177
-- **API Docs**: http://localhost:3001/api/docs
+- **Frontend PWA**: http://localhost:5180/
+- **Datos de prueba**: Se crean automáticamente al iniciar sesión
 
 ## 🔧 Scripts Disponibles
 
 ```bash
 # Desarrollo
-pnpm run dev          # Ejecutar todo en modo desarrollo
-pnpm run build        # Compilar todo el proyecto
-pnpm run start        # Ejecutar en producción
+pnpm run dev          # Ejecutar aplicación web
+pnpm run build        # Compilar para producción
+pnpm run preview      # Vista previa de producción
 
-# Por aplicación específica
-pnpm run dev:api      # Solo backend
-pnpm run dev:web      # Solo frontend
+# Testing (próximamente)
+pnpm run test         # Ejecutar pruebas
+pnpm run test:watch   # Pruebas en modo watch
+
+# Utilidades
+pnpm run lint         # Linter de código
+pnpm run format       # Formatear código
 ```
 
 ## 🌟 Características Principales
 
 ### ✅ Gestión de Usuarios
-- Registro y autenticación
-- Perfiles de usuario
-- Control de acceso
+- Registro y autenticación con Firebase Auth
+- Perfiles de usuario integrados
+- Sesiones persistentes
 
 ### ✅ Gestión de Granjas
-- Crear y administrar granjas
-- Información detallada de ubicación
-- Gestión de parcelas
+- Crear y administrar granjas en la nube
+- Información geográfica y de área
+- Sincronización en tiempo real
 
 ### ✅ Gestión de Cultivos
 - Registro de diferentes tipos de cultivos
-- Seguimiento de variedades
-- Control de estado de cultivos
+- Seguimiento de variedades y estados
+- Historial de cultivos por granja
 
 ### ✅ Gestión de Tareas Agrícolas
-- **Tipos de tareas**: Siembra, Riego, Fertilización, Control de plagas, Cosecha, etc.
-- **Prioridades**: Baja, Media, Alta, Urgente
-- **Estados**: Pendiente, En progreso, Completada, Cancelada
-- **Asignación**: Tareas asignables a usuarios específicos
-- **Programación**: Fechas y horarios de ejecución
+- **Tipos de tareas**: Riego, Fertilización, Control de plagas, Cosecha, etc.
+- **Prioridades**: Baja, Media, Alta
+- **Estados**: Pendiente, En progreso, Completada
+- **Asignación**: Tareas organizadas por usuario
+- **Programación**: Fechas de vencimiento y recordatorios
 
 ### ✅ Dashboard Interactivo
-- Estadísticas generales
-- Resumen de tareas pendientes
-- Estado de cultivos activos
-- Métricas importantes
+- Estadísticas en tiempo real
+- Resumen de tareas pendientes y completadas
+- Estado actual de cultivos
+- Métricas de rendimiento
+
+### ✅ Progressive Web App (PWA)
+- **Instalable**: Se puede instalar como app nativa
+- **Offline**: Funciona sin conexión a internet
+- **Responsive**: Optimizado para móvil y desktop
+- **Notificaciones**: Push notifications (próximamente)
 
 ## 🔐 Autenticación
 
-El sistema utiliza JWT (JSON Web Tokens) para la autenticación segura:
+El sistema utiliza Firebase Auth para autenticación segura y escalable:
 
-```
-Usuario de prueba:
-Email: admin@campo360.com
-Password: 123456789
+```bash
+# Para probar la aplicación:
+1. Registra una cuenta nueva, o
+2. Usa las credenciales de prueba (si están disponibles)
+
+# Datos de prueba se crean automáticamente:
+- 3 granjas de ejemplo
+- 6 cultivos variados
+- 8 tareas con diferentes estados
 ```
 
-> **Nota**: Estas credenciales se crean automáticamente con el comando `pnpm prisma db seed`
+> **Consola del navegador**: Ejecuta `createCampo360SampleData()` para generar datos de prueba
 
 ## 🗄️ Base de Datos
 
-### Modelo de Datos
-- **Users**: Gestión de usuarios del sistema
-- **Farms**: Información de granjas
-- **Crops**: Datos de cultivos
-- **Tasks**: Tareas agrícolas con todas sus propiedades
+### Firebase Firestore
+- **Real-time**: Actualizaciones en tiempo real
+- **Offline-first**: Funciona sin conexión
+- **Escalable**: Maneja cualquier cantidad de datos
+- **Segura**: Reglas de seguridad integradas
 
-### Configuración de Prisma
-```bash
-# Ver esquema actual
-pnpm prisma studio
+### Colecciones principales:
+- **users**: Perfiles de usuario (auto-gestionado por Firebase Auth)
+- **farms**: Información de granjas por usuario
+- **crops**: Datos de cultivos asociados a granjas  
+- **tasks**: Tareas agrícolas con seguimiento de estado
 
-# Aplicar cambios al esquema
-pnpm prisma db push
-
-# Poblar con datos de prueba
-pnpm prisma db seed
+### Datos de prueba
+```javascript
+// En la consola del navegador:
+createCampo360SampleData()  // Crear datos de ejemplo
+clearCampo360SampleData()   // Limpiar datos de ejemplo
 ```
 
-## 🌐 API REST
+## 🌐 Arquitectura Cloud-Native
 
-La API está documentada con Swagger en: `http://localhost:3001/api/docs`
+### Firebase Services
+- **Authentication**: Gestión completa de usuarios
+- **Firestore**: Base de datos NoSQL en tiempo real
+- **Analytics**: Métricas de uso integradas
+- **Hosting**: Despliegue automático (próximamente)
 
-### Endpoints principales:
-- **Auth**: `/auth/login`, `/auth/register`
-- **Users**: `/users/profile`
-- **Farms**: `/farms` (CRUD completo)
-- **Crops**: `/crops` (CRUD completo)
-- **Tasks**: `/tasks` (CRUD completo)
+### Beneficios de Firebase:
+- ✅ **Escalabilidad automática**
+- ✅ **Sin mantenimiento de servidores**
+- ✅ **Sincronización en tiempo real**
+- ✅ **Offline-first por defecto**
+- ✅ **Seguridad enterprise-grade**
 
 ## 🎨 Interfaz de Usuario
 
-- **Diseño responsivo** con Tailwind CSS
-- **Navegación intuitiva** con sidebar y header
-- **Formularios validados** con React Hook Form
-- **Notificaciones toast** para feedback del usuario
-- **Carga de datos optimizada** con React Query
+- **Mobile-first**: Diseño responsivo optimizado para móviles
+- **PWA nativa**: Instalable como aplicación nativa
+- **Navegación intuitiva**: Sidebar colapsible con hamburger menu
+- **Formularios inteligentes**: Validación en tiempo real con React Hook Form
+- **Estados de carga**: Loading spinners y skeletons
+- **Notificaciones**: Sistema de toast notifications
+- **Offline-ready**: Funciona sin conexión a internet
+
+### Características técnicas de UI:
+- **Tailwind CSS**: Sistema de diseño consistente
+- **Dark mode ready**: Preparado para modo oscuro
+- **Accesibilidad**: Cumple estándares WCAG
+- **Performance**: Optimizado para Core Web Vitals
 
 ## 🔧 Configuración del Entorno
 
 ### Variables de Entorno
 
-**Backend (`apps/api/.env`)**:
-```env
-# Database
-DATABASE_URL="file:./prisma/dev.db"
-
-# JWT Configuration - ¡CAMBIAR EN PRODUCCIÓN!
-JWT_SECRET="campo360-super-secret-jwt-key-2024-production-ready"
-JWT_EXPIRES_IN="7d"
-
-# Server Configuration
-PORT=3001
-NODE_ENV="development"
-
-# CORS Configuration
-CORS_ORIGIN="http://localhost:5177,http://localhost:5173"
-
-# Security
-BCRYPT_ROUNDS=12
-```
-
 **Frontend (`apps/web/.env.local`)**:
 ```env
-# API Configuration
-VITE_API_URL=http://localhost:3001
+# Firebase Configuration
+VITE_FIREBASE_API_KEY=your-api-key-here
+VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your-project-id
+VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=123456789012
+VITE_FIREBASE_APP_ID=1:123456789012:web:abcdef123456789012
 
 # Application Configuration
 VITE_APP_NAME="Campo360 Manager"
@@ -203,18 +206,35 @@ VITE_DEBUG=true
 VITE_PWA_ENABLED=true
 ```
 
-> **⚠️ Importante**: Nunca commitees archivos `.env` con datos sensibles. Usa los archivos `.env.example` como plantilla.
+> **⚠️ Importante**: 
+> - Las credenciales incluidas son para desarrollo
+> - Para producción, configura tu propio proyecto Firebase
+> - Nunca commitees archivos `.env` con datos sensibles
 
 ## 🚀 Despliegue
+
+### Desarrollo Local
+```bash
+cd apps/web
+pnpm run dev
+```
 
 ### Producción
 ```bash
 # Compilar para producción
 pnpm run build
 
-# Ejecutar en producción
-pnpm run start
+# Vista previa local
+pnpm run preview
+
+# Despliegue en Firebase Hosting (próximamente)
+firebase deploy
 ```
+
+### PWA Installation
+- La app se puede instalar como PWA nativa
+- Funciona offline después de la primera carga
+- Se actualiza automáticamente
 
 ## 🤝 Contribución
 
