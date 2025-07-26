@@ -85,8 +85,8 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Configuración</h1>
-        <p className="mt-2 text-gray-600">
+        <h1 className="text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>Configuración</h1>
+        <p className="mt-2" style={{ color: 'var(--text-secondary)' }}>
           Gestiona tu cuenta y preferencias de la aplicación
         </p>
       </div>
@@ -103,9 +103,17 @@ export default function SettingsPage() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                     activeTab === tab.id
-                      ? 'bg-blue-100 text-blue-700 border-r-2 border-blue-700'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                      ? 'text-blue-700 border-r-2 border-blue-700'
+                      : 'hover:bg-gray-50'
                   }`}
+                  style={{
+                    backgroundColor: activeTab === tab.id 
+                      ? (document.documentElement.classList.contains('dark') ? 'rgba(59, 130, 246, 0.1)' : '#eff6ff')
+                      : 'transparent',
+                    color: activeTab === tab.id 
+                      ? '#1d4ed8' 
+                      : 'var(--text-secondary)'
+                  }}
                 >
                   <Icon className="w-5 h-5 mr-3" />
                   {tab.label}
@@ -117,69 +125,84 @@ export default function SettingsPage() {
 
         {/* Content */}
         <div className="flex-1">
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="rounded-lg shadow p-6" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-primary)', border: '1px solid' }}>
             {activeTab === 'profile' && (
               <div className="space-y-6">
-                <h2 className="text-xl font-semibold text-gray-900">Información del Perfil</h2>
+                <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>Información del Perfil</h2>
                 
                 <div className="flex items-center space-x-6">
                   <div className="relative">
-                    <div className="w-20 h-20 bg-gray-300 rounded-full flex items-center justify-center">
-                      <User className="w-8 h-8 text-gray-600" />
+                    <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                      <User className="w-8 h-8" style={{ color: 'var(--text-secondary)' }} />
                     </div>
                     <button className="absolute -bottom-1 -right-1 p-1 bg-blue-600 text-white rounded-full hover:bg-blue-700">
                       <Camera className="w-4 h-4" />
                     </button>
                   </div>
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900">Foto de perfil</h3>
-                    <p className="text-sm text-gray-500">Sube una imagen para personalizar tu perfil</p>
+                    <h3 className="text-lg font-medium" style={{ color: 'var(--text-primary)' }}>Foto de perfil</h3>
+                    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Sube una imagen para personalizar tu perfil</p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
                       Nombre completo
                     </label>
                     <div className="relative">
-                      <User className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                      <User className="absolute left-3 top-3 w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
                       <input
                         type="text"
                         value={formData.displayName}
                         onChange={(e) => setFormData(prev => ({ ...prev, displayName: e.target.value }))}
-                        className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="pl-10 w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        style={{ 
+                          backgroundColor: 'var(--bg-primary)', 
+                          borderColor: 'var(--border-secondary)', 
+                          color: 'var(--text-primary)' 
+                        }}
                         placeholder="Tu nombre completo"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
                       Correo electrónico
                     </label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                      <Mail className="absolute left-3 top-3 w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
                       <input
                         type="email"
                         value={formData.email}
                         disabled
-                        className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500"
+                        className="pl-10 w-full px-3 py-2 border rounded-md"
+                        style={{ 
+                          backgroundColor: 'var(--bg-tertiary)', 
+                          borderColor: 'var(--border-secondary)', 
+                          color: 'var(--text-tertiary)' 
+                        }}
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
                       Teléfono
                     </label>
                     <div className="relative">
-                      <Phone className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                      <Phone className="absolute left-3 top-3 w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
                       <input
                         type="tel"
                         value={formData.phone}
                         onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                        className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="pl-10 w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        style={{ 
+                          backgroundColor: 'var(--bg-primary)', 
+                          borderColor: 'var(--border-secondary)', 
+                          color: 'var(--text-primary)' 
+                        }}
                         placeholder="+57 300 123 4567"
                       />
                     </div>
@@ -200,15 +223,15 @@ export default function SettingsPage() {
 
             {activeTab === 'notifications' && (
               <div className="space-y-6">
-                <h2 className="text-xl font-semibold text-gray-900">Notificaciones</h2>
+                <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>Notificaciones</h2>
                 
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                  <div className="flex items-center justify-between p-4 border rounded-lg" style={{ borderColor: 'var(--border-primary)' }}>
                     <div className="flex items-center space-x-3">
-                      <Mail className="w-5 h-5 text-gray-400" />
+                      <Mail className="w-5 h-5" style={{ color: 'var(--text-tertiary)' }} />
                       <div>
-                        <h3 className="font-medium text-gray-900">Notificaciones por email</h3>
-                        <p className="text-sm text-gray-500">Recibe notificaciones importantes por correo</p>
+                        <h3 className="font-medium" style={{ color: 'var(--text-primary)' }}>Notificaciones por email</h3>
+                        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Recibe notificaciones importantes por correo</p>
                       </div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -218,16 +241,16 @@ export default function SettingsPage() {
                         onChange={(e) => handleSaveSettings('emailNotifications', e.target.checked)}
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      <div className="w-11 h-6 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600" style={{ backgroundColor: settings.emailNotifications ? '#2563eb' : 'var(--bg-tertiary)', borderColor: 'var(--border-secondary)' }}></div>
                     </label>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                  <div className="flex items-center justify-between p-4 border rounded-lg" style={{ borderColor: 'var(--border-primary)' }}>
                     <div className="flex items-center space-x-3">
-                      <Bell className="w-5 h-5 text-gray-400" />
+                      <Bell className="w-5 h-5" style={{ color: 'var(--text-tertiary)' }} />
                       <div>
-                        <h3 className="font-medium text-gray-900">Alertas de inventario</h3>
-                        <p className="text-sm text-gray-500">Notificaciones cuando el stock esté bajo</p>
+                        <h3 className="font-medium" style={{ color: 'var(--text-primary)' }}>Alertas de inventario</h3>
+                        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Notificaciones cuando el stock esté bajo</p>
                       </div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -237,7 +260,7 @@ export default function SettingsPage() {
                         onChange={(e) => handleSaveSettings('inventoryAlerts', e.target.checked)}
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      <div className="w-11 h-6 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600" style={{ backgroundColor: settings.inventoryAlerts ? '#2563eb' : 'var(--bg-tertiary)', borderColor: 'var(--border-secondary)' }}></div>
                     </label>
                   </div>
                 </div>
@@ -246,26 +269,40 @@ export default function SettingsPage() {
 
             {activeTab === 'preferences' && (
               <div className="space-y-6">
-                <h2 className="text-xl font-semibold text-gray-900">Preferencias</h2>
+                <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>Preferencias</h2>
                 
                 <div className="space-y-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">Tema</label>
+                    <label className="block text-sm font-medium mb-3" style={{ color: 'var(--text-primary)' }}>Tema</label>
                     <div className="grid grid-cols-2 gap-3">
                       <button
                         onClick={() => handleThemeChange('light')}
-                        className={`p-4 border-2 rounded-lg flex items-center space-x-3 ${
-                          theme === 'light' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                        className={`p-4 border-2 rounded-lg flex items-center space-x-3 transition-all duration-200 ${
+                          theme === 'light' 
+                            ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' 
+                            : 'border-gray-300 hover:border-gray-400 dark:border-gray-600 dark:hover:border-gray-500'
                         }`}
+                        style={{ 
+                          backgroundColor: theme === 'light' ? (document.documentElement.classList.contains('dark') ? '#1e3a8a' : '#eff6ff') : 'var(--bg-primary)',
+                          color: theme === 'light' ? (document.documentElement.classList.contains('dark') ? '#93c5fd' : '#1d4ed8') : 'var(--text-primary)',
+                          borderColor: theme === 'light' ? '#3b82f6' : 'var(--border-secondary)'
+                        }}
                       >
                         <Sun className="w-5 h-5" />
                         <span>Claro</span>
                       </button>
                       <button
                         onClick={() => handleThemeChange('dark')}
-                        className={`p-4 border-2 rounded-lg flex items-center space-x-3 ${
-                          theme === 'dark' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                        className={`p-4 border-2 rounded-lg flex items-center space-x-3 transition-all duration-200 ${
+                          theme === 'dark' 
+                            ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' 
+                            : 'border-gray-300 hover:border-gray-400 dark:border-gray-600 dark:hover:border-gray-500'
                         }`}
+                        style={{ 
+                          backgroundColor: theme === 'dark' ? (document.documentElement.classList.contains('dark') ? '#1e3a8a' : '#eff6ff') : 'var(--bg-primary)',
+                          color: theme === 'dark' ? (document.documentElement.classList.contains('dark') ? '#93c5fd' : '#1d4ed8') : 'var(--text-primary)',
+                          borderColor: theme === 'dark' ? '#3b82f6' : 'var(--border-secondary)'
+                        }}
                       >
                         <Moon className="w-5 h-5" />
                         <span>Oscuro</span>
@@ -274,13 +311,20 @@ export default function SettingsPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Idioma</label>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
+                      Idioma
+                    </label>
                     <div className="relative">
-                      <Globe className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                      <Globe className="absolute left-3 top-3 w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
                       <select
                         value={settings.language}
                         onChange={(e) => handleSaveSettings('language', e.target.value)}
-                        className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="pl-10 w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        style={{ 
+                          backgroundColor: 'var(--bg-primary)', 
+                          borderColor: 'var(--border-secondary)', 
+                          color: 'var(--text-primary)' 
+                        }}
                       >
                         <option value="es">Español</option>
                         <option value="en">English</option>
@@ -293,16 +337,16 @@ export default function SettingsPage() {
 
             {activeTab === 'security' && (
               <div className="space-y-6">
-                <h2 className="text-xl font-semibold text-gray-900">Seguridad</h2>
+                <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>Seguridad</h2>
                 
                 <div className="space-y-4">
-                  <div className="p-4 border border-gray-200 rounded-lg">
+                  <div className="p-4 border rounded-lg" style={{ borderColor: 'var(--border-primary)' }}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
-                        <Key className="w-5 h-5 text-gray-400" />
+                        <Key className="w-5 h-5" style={{ color: 'var(--text-tertiary)' }} />
                         <div>
-                          <h3 className="font-medium text-gray-900">Cambiar contraseña</h3>
-                          <p className="text-sm text-gray-500">Actualiza tu contraseña regularmente</p>
+                          <h3 className="font-medium" style={{ color: 'var(--text-primary)' }}>Cambiar contraseña</h3>
+                          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Actualiza tu contraseña regularmente</p>
                         </div>
                       </div>
                       <button
@@ -319,16 +363,16 @@ export default function SettingsPage() {
 
             {activeTab === 'data' && (
               <div className="space-y-6">
-                <h2 className="text-xl font-semibold text-gray-900">Gestión de Datos</h2>
+                <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>Gestión de Datos</h2>
                 
                 <div className="space-y-4">
-                  <div className="p-4 border border-gray-200 rounded-lg">
+                  <div className="p-4 border rounded-lg" style={{ borderColor: 'var(--border-primary)' }}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <Download className="w-5 h-5 text-green-600" />
                         <div>
-                          <h3 className="font-medium text-gray-900">Exportar datos</h3>
-                          <p className="text-sm text-gray-500">Descarga una copia de toda tu información</p>
+                          <h3 className="font-medium" style={{ color: 'var(--text-primary)' }}>Exportar datos</h3>
+                          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Descarga una copia de toda tu información</p>
                         </div>
                       </div>
                       <button
@@ -340,7 +384,7 @@ export default function SettingsPage() {
                     </div>
                   </div>
 
-                  <div className="p-4 border border-red-200 rounded-lg bg-red-50">
+                  <div className="p-4 border border-red-200 rounded-lg" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: '#fca5a5' }}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <Trash2 className="w-5 h-5 text-red-600" />

@@ -257,6 +257,25 @@ body {
   border-color: var(--border-secondary) !important;
 }
 
+/* Labels y texto en modo oscuro */
+.dark label,
+.dark .label {
+  color: var(--text-primary) !important;
+}
+
+.dark h1,
+.dark h2,
+.dark h3,
+.dark h4,
+.dark h5,
+.dark h6 {
+  color: var(--text-primary) !important;
+}
+
+.dark p {
+  color: var(--text-secondary) !important;
+}
+
 /* Inputs y forms en modo oscuro */
 .dark .input,
 .dark input[type="text"],
@@ -291,6 +310,36 @@ body {
 .dark .badge-info {
   background-color: rgba(59, 130, 246, 0.1) !important;
   color: #93c5fd !important;
+}
+
+/* Switches/toggles en modo oscuro */
+.dark .toggle-bg {
+  background-color: var(--bg-tertiary) !important;
+}
+
+.dark .toggle-dot {
+  background-color: var(--text-primary) !important;
+}
+
+/* Dropdowns en modo oscuro */
+.dark select option {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Placeholders en modo oscuro */
+.dark input::placeholder {
+  color: var(--text-tertiary) !important;
+  opacity: 0.7;
+}
+
+/* Mejoras para elementos focus en modo oscuro */
+.dark input:focus,
+.dark select:focus,
+.dark textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #3b82f6;
+  border-color: #3b82f6 !important;
 }
 
 /* Responsive */
