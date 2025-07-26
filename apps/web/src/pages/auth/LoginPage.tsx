@@ -3,14 +3,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/FirebaseAuthContext';
 import { toast } from '@/components/ui/Toaster';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Eye, EyeOff, Wheat } from 'lucide-react';
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
-  password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres'),
+  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
@@ -32,11 +32,11 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true);
     try {
-      await login(data);
+      await login(data.email, data.password);
       toast.success('¡Bienvenido!', 'Has iniciado sesión correctamente');
       navigate('/dashboard');
     } catch (error: any) {
-      toast.error('Error al iniciar sesión', error.response?.data?.message || 'Credenciales inválidas');
+      toast.error('Error al iniciar sesión', error.message || 'Credenciales inválidas');
     } finally {
       setIsLoading(false);
     }
@@ -139,10 +139,10 @@ export default function LoginPage() {
         
         {/* Demo credentials */}
         <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <p className="text-sm text-blue-800 font-medium mb-2">Credenciales de prueba:</p>
+          <p className="text-sm text-blue-800 font-medium mb-2">Crea tu cuenta con Firebase:</p>
           <p className="text-sm text-blue-700">
-            <strong>Email:</strong> admin@campo360.com<br />
-            <strong>Contraseña:</strong> 123456789
+            Ahora usamos <strong>Firebase Authentication</strong><br />
+            Registra una cuenta nueva o usa las credenciales que ya creaste en Firebase
           </p>
         </div>
       </div>

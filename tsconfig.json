@@ -38,6 +38,12 @@
   ],
   "references": [
     {
+      "path": "./apps/web"
+    },
+    {
+      "path": "./apps/api"
+    },
+    {
       "path": "./packages/lib"
     }
   ]

@@ -7,7 +7,7 @@ import {
   Settings,
   LogOut
 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/FirebaseAuthContext';
 import { clsx } from 'clsx';
 
 const navigation = [
@@ -19,7 +19,19 @@ const navigation = [
 
 export function Sidebar() {
   const location = useLocation();
-  const { logout, user } = useAuth();
+  const { logout, currentUser } = useAuth();
+
+  const getInitials = () => {
+    if (currentUser?.displayName) {
+      const names = currentUser.displayName.split(' ');
+      return names.map(name => name.charAt(0)).join('').toUpperCase().slice(0, 2);
+    }
+    return currentUser?.email?.charAt(0).toUpperCase() || 'U';
+  };
+
+  const getDisplayName = () => {
+    return currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Usuario';
+  };
 
   return (
     <div className="hidden md:flex md:flex-shrink-0">
@@ -73,16 +85,16 @@ export function Sidebar() {
                 <div className="flex-shrink-0">
                   <div className="w-9 h-9 bg-primary-600 rounded-full flex items-center justify-center">
                     <span className="text-sm font-medium text-white">
-                      {user?.firstName.charAt(0)}{user?.lastName.charAt(0)}
+                      {getInitials()}
                     </span>
                   </div>
                 </div>
                 <div className="ml-3 flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">
-                    {user?.firstName} {user?.lastName}
+                    {getDisplayName()}
                   </p>
                   <p className="text-xs text-gray-500 truncate">
-                    {user?.email}
+                    {currentUser?.email}
                   </p>
                 </div>
                 <button

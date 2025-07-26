@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/FirebaseAuthContext';
 import { toast } from '@/components/ui/Toaster';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Eye, EyeOff, Wheat } from 'lucide-react';
@@ -13,7 +13,7 @@ const registerSchema = z.object({
   lastName: z.string().min(2, 'El apellido debe tener al menos 2 caracteres'),
   email: z.string().email('Email inválido'),
   phone: z.string().optional(),
-  password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres'),
+  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Las contraseñas no coinciden",
@@ -40,12 +40,12 @@ export default function RegisterPage() {
   const onSubmit = async (data: RegisterForm) => {
     setIsLoading(true);
     try {
-      const { confirmPassword, ...userData } = data;
-      await registerUser(userData);
+      const displayName = `${data.firstName} ${data.lastName}`;
+      await registerUser(data.email, data.password, displayName);
       toast.success('¡Cuenta creada!', 'Tu cuenta ha sido creada exitosamente');
       navigate('/dashboard');
     } catch (error: any) {
-      toast.error('Error al crear cuenta', error.response?.data?.message || 'Ha ocurrido un error');
+      toast.error('Error al crear cuenta', error.message || 'Ha ocurrido un error');
     } finally {
       setIsLoading(false);
     }

@@ -10,7 +10,7 @@ import {
   AlertTriangle,
   Plus
 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/FirebaseAuthContext';
 import { farmsService } from '@/services/farmsService';
 import { cropsService } from '@/services/cropsService';
 import { tasksService } from '@/services/tasksService';
@@ -18,11 +18,11 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { formatDate, formatArea } from '@campo360/lib';
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { currentUser } = useAuth();
 
   // Queries para obtener datos del dashboard
   const { data: farms, isLoading: farmsLoading } = useQuery('farms', farmsService.getFarms);
-  const { data: crops, isLoading: cropsLoading } = useQuery('crops', cropsService.getCrops);
+  const { data: crops, isLoading: cropsLoading } = useQuery('crops', () => cropsService.getCrops());
   const { data: tasks, isLoading: tasksLoading } = useQuery('tasks', tasksService.getTasks);
 
   // Cálculos para las estadísticas
@@ -87,7 +87,7 @@ export default function DashboardPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            ¡Hola, {user?.firstName}! 👋
+            ¡Hola, {currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Usuario'}! 👋
           </h1>
           <p className="text-gray-600 mt-1">
             Aquí tienes un resumen de tu actividad agrícola

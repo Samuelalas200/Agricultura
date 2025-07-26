@@ -1,8 +1,8 @@
 import { Menu, Bell, Cloud } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/FirebaseAuthContext';
 
 export function Header() {
-  const { user } = useAuth();
+  const { currentUser } = useAuth();
 
   return (
     <div className="sticky top-0 z-10 flex-shrink-0 flex h-16 bg-white shadow">
@@ -21,7 +21,7 @@ export function Header() {
               {/* Breadcrumb o título de página */}
               <div className="flex items-center h-16">
                 <h1 className="text-lg font-semibold text-gray-900">
-                  Bienvenido, {user?.firstName}
+                  Bienvenido, {currentUser?.displayName || currentUser?.email?.split('@')[0]}
                 </h1>
               </div>
             </div>
