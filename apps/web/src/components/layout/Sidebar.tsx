@@ -76,18 +76,18 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   return (
     <>
-      {/* Overlay para móvil */}
+      {/* Overlay para móvil - mejorado */}
       {isOpen && (
         <div 
-          className="fixed inset-0 z-20 bg-gray-600 bg-opacity-75 md:hidden"
+          className="fixed inset-0 z-40 bg-gray-900/50 backdrop-blur-sm lg:hidden transition-opacity duration-300"
           onClick={onClose}
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - mejorado para móvil */}
       <div className={clsx(
-        "fixed inset-y-0 left-0 z-30 w-72 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 shadow-2xl transform transition-all duration-300 ease-in-out",
-        "md:relative md:translate-x-0 md:shadow-xl md:z-auto",
+        "fixed inset-y-0 left-0 z-50 w-80 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 shadow-2xl transform transition-all duration-300 ease-in-out",
+        "lg:relative lg:translate-x-0 lg:shadow-xl lg:z-auto lg:w-72",
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="flex flex-col h-full">
@@ -105,10 +105,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             
             {/* Botón cerrar mejorado para móvil */}
             <button
-              className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/50 transition-all duration-200 md:hidden"
+              className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/50 transition-all duration-200 lg:hidden"
               onClick={onClose}
             >
-              <X className="h-5 w-5" />
+              <X className="h-6 w-6" />
             </button>
           </div>
 
