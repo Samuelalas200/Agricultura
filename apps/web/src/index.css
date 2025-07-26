@@ -178,6 +178,21 @@ body {
   .card {
     @apply p-4;
   }
+  
+  /* Botones más grandes para móvil */
+  .btn {
+    @apply min-h-[44px] text-base;
+  }
+  
+  /* Inputs más altos para móvil */
+  .input {
+    @apply min-h-[44px] text-base;
+  }
+  
+  /* Links de navegación más altos para toques */
+  nav a {
+    @apply min-h-[44px];
+  }
 }
 
 /* Estados de focus para accesibilidad */

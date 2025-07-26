@@ -1,7 +1,11 @@
 import { Menu, Bell, Cloud } from 'lucide-react';
 import { useAuth } from '@/contexts/FirebaseAuthContext';
 
-export function Header() {
+interface HeaderProps {
+  onMenuClick: () => void;
+}
+
+export function Header({ onMenuClick }: HeaderProps) {
   const { currentUser } = useAuth();
 
   return (
@@ -9,6 +13,7 @@ export function Header() {
       <button
         type="button"
         className="px-4 border-r border-gray-200 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 md:hidden"
+        onClick={onMenuClick}
       >
         <span className="sr-only">Abrir sidebar</span>
         <Menu className="h-6 w-6" />
