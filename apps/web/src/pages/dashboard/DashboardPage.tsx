@@ -11,11 +11,17 @@ import {
   Plus,
   Database
 } from 'lucide-react';
-import { useAuth } from '@/contexts/FirebaseAuthContext';
-import { farmsService, cropsService, tasksService } from '@/services/firebaseService';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { useAuth } from '../../contexts/FirebaseAuthContext';
+import { farmsService, cropsService, tasksService } from '../../services/firebaseService';
+import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { formatDate, formatArea } from '@campo360/lib';
-import { createSampleData } from '@/utils/sampleData';
+import { createSampleData } from '../../utils/sampleData';
+
+// Importar los nuevos componentes del dashboard
+import { ProductivityChart } from '../../components/dashboard/ProductivityChart';
+import { TasksCalendar } from '../../components/dashboard/TasksCalendar';
+import { WeatherAlerts } from '../../components/dashboard/WeatherAlerts';
+import { FinancialSummary } from '../../components/dashboard/FinancialSummary';
 
 export default function DashboardPage() {
   const { currentUser } = useAuth();
@@ -210,6 +216,20 @@ export default function DashboardPage() {
           </Link>
         </div>
       )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Gráfico de Productividad */}
+        <ProductivityChart farms={farms} crops={crops} />
+
+        {/* Calendario de Tareas */}
+        <TasksCalendar tasks={tasks} />
+      </div>
+
+      {/* Alertas Meteorológicas y Resumen Financiero */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <WeatherAlerts />
+        <FinancialSummary farms={farms} crops={crops} tasks={tasks} />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Tareas Recientes */}
