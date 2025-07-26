@@ -3,15 +3,23 @@ import { vi } from 'vitest'
 
 // Mock de Firebase
 vi.mock('firebase/app', () => ({
-  initializeApp: vi.fn(),
+  initializeApp: vi.fn(() => ({})),
+}))
+
+// Mock específico para la configuración de Firebase
+vi.mock('@/lib/firebase', () => ({
+  auth: {},
+  db: {},
 }))
 
 vi.mock('firebase/auth', () => ({
-  getAuth: vi.fn(),
+  getAuth: vi.fn(() => ({})),
   signInWithEmailAndPassword: vi.fn(),
   createUserWithEmailAndPassword: vi.fn(),
   signOut: vi.fn(),
   onAuthStateChanged: vi.fn(),
+  updateProfile: vi.fn(),
+  User: {},
 }))
 
 vi.mock('firebase/firestore', () => ({

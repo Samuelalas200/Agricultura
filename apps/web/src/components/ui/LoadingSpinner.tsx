@@ -14,6 +14,7 @@ export function LoadingSpinner({ size = 'md', className }: LoadingSpinnerProps) 
 
   return (
     <div
+      data-testid="loading-spinner"
       className={clsx(
         'loading-spinner',
         sizeClasses[size],
