@@ -48,6 +48,10 @@ pnpm install
 # Configurar variables de entorno
 cp apps/web/.env.example apps/web/.env.local
 
+# Weather API Configuration
+# Get your free API key from: https://openweathermap.org/api
+VITE_OPENWEATHER_API_KEY=your_openweather_api_key_here
+
 # Editar .env.local con tus credenciales de Firebase
 # Las credenciales por defecto son para desarrollo
 ```
@@ -104,6 +108,14 @@ pnpm run format       # Formatear código
 - **Estados**: Pendiente, En progreso, Completada
 - **Asignación**: Tareas organizadas por usuario
 - **Programación**: Fechas de vencimiento y recordatorios
+
+### ✅ Clima y Alertas Meteorológicas
+- **Integración con OpenWeatherMap**: Datos meteorológicos en tiempo real
+- **Alertas inteligentes**: Notificaciones automáticas por condiciones adversas
+- **Datos agrícolas**: Evapotranspiración, días grado, recomendaciones de riego
+- **Notificaciones push**: Alertas críticas y pronóstico diario
+- **Múltiples ubicaciones**: Selector de ciudades con geolocalización
+- **Información especializada**: Riesgo de plagas, condiciones de siembra/cosecha
 
 ### ✅ Dashboard Interactivo
 - Estadísticas en tiempo real

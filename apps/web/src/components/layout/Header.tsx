@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Search, Bell, User, Menu, X, ChevronDown, Settings, LogOut, Sun, MapPin, Wheat, CheckSquare, ArrowUpRight } from 'lucide-react';
+import { Search, User, Menu, X, ChevronDown, Settings, LogOut, Sun, MapPin, Wheat, CheckSquare, ArrowUpRight } from 'lucide-react';
 import { useAuth } from '../../contexts/FirebaseAuthContext';
 import { useQuery } from 'react-query';
 import { farmsService, cropsService, tasksService } from '../../services/firebaseService';
 import { Link } from 'react-router-dom';
+import { useWeatherNotifications } from '../../hooks/useWeatherNotifications';
+import { WeatherNotificationsPanel } from '../weather/WeatherNotificationsPanel';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -12,10 +14,27 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, isSidebarOpen }) => {
   const { currentUser, logout } = useAuth();
-  const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
+
+  // Weather notifications hook
+  const {
+    notifications,
+    unreadCount,
+    markNotificationAsRead,
+    clearAllNotifications,
+    requestNotificationPermission
+  } = useWeatherNotifications({
+    location: 'San Salvador', // You can make this configurable
+    enableNotifications: true,
+    refreshInterval: 30
+  });
+
+  // Request notification permission on component mount
+  useEffect(() => {
+    requestNotificationPermission();
+  }, [requestNotificationPermission]);
 
   // Obtener datos para búsqueda
   const userId = currentUser?.uid;
@@ -254,48 +273,13 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, isSidebarOpen }
               <span className="text-sm text-gray-700">24°C</span>
             </div>
 
-            {/* Notifications */}
-            <div className="relative">
-              <button
-                onClick={() => setShowNotifications(!showNotifications)}
-                className="relative p-1.5 sm:p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
-                <span className="absolute -top-1 -right-1 h-3 w-3 sm:h-4 sm:w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                  3
-                </span>
-              </button>
-
-              {showNotifications && (
-                <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50 max-h-96 overflow-hidden">
-                  <div className="px-3 sm:px-4 py-2 border-b border-gray-100">
-                    <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Notificaciones</h3>
-                  </div>
-                  <div className="max-h-64 overflow-y-auto">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="px-3 sm:px-4 py-3 hover:bg-gray-50 border-b border-gray-50">
-                        <div className="flex items-start space-x-3">
-                          <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">
-                              Tarea completada en Finca Norte
-                            </p>
-                            <p className="text-xs text-gray-500 mt-1">
-                              Hace 2 horas
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="px-3 sm:px-4 py-2 border-t border-gray-100">
-                    <button className="text-xs sm:text-sm text-green-600 hover:text-green-700 font-medium">
-                      Ver todas
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+            {/* Weather Notifications */}
+            <WeatherNotificationsPanel
+              notifications={notifications}
+              unreadCount={unreadCount}
+              onMarkAsRead={markNotificationAsRead}
+              onClearAll={clearAllNotifications}
+            />
 
             {/* User Menu */}
             <div className="relative">
