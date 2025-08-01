@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Search, Bell, User, Menu, X, ChevronDown, Settings, LogOut, Sun, MapPin, Wheat, CheckSquare, ArrowUpRight } from 'lucide-react';
 import { useAuth } from '../../contexts/FirebaseAuthContext';
 import { useQuery } from 'react-query';
@@ -15,7 +15,6 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, isSidebarOpen }
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
 
   // Obtener datos para búsqueda
@@ -39,12 +38,10 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, isSidebarOpen }
     { enabled: !!userId }
   );
 
-  // Función de búsqueda
-  useEffect(() => {
+  // Función de búsqueda con useMemo para evitar bucles infinitos
+  const searchResults = useMemo(() => {
     if (!searchQuery.trim()) {
-      setSearchResults([]);
-      setShowSearchResults(false);
-      return;
+      return [];
     }
 
     const query = searchQuery.toLowerCase();
@@ -105,9 +102,13 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, isSidebarOpen }
       }
     });
 
-    setSearchResults(results.slice(0, 8)); // Limitar a 8 resultados
-    setShowSearchResults(results.length > 0 || searchQuery.trim().length > 0);
+    return results.slice(0, 8); // Limitar a 8 resultados
   }, [searchQuery, farms, crops, tasks]);
+
+  // Controlar la visibilidad de resultados
+  useEffect(() => {
+    setShowSearchResults(searchQuery.trim().length > 0);
+  }, [searchQuery]);
 
   // Cerrar resultados al hacer clic fuera
   useEffect(() => {

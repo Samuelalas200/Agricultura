@@ -113,6 +113,7 @@ export default function DashboardPage() {
       icon: TrendingUp,
       color: 'text-purple-600',
       bgColor: 'bg-purple-100',
+      href: '/farms',
     },
   ];
 
@@ -193,7 +194,7 @@ export default function DashboardPage() {
           
           return (
             <div key={stat.name} className="group relative">
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className={`w-12 h-12 bg-gradient-to-br ${gradients[index]} rounded-xl flex items-center justify-center shadow-lg mb-4`}>
@@ -206,6 +207,8 @@ export default function DashboardPage() {
                       <Link
                         to={stat.href}
                         className="inline-flex items-center text-sm font-medium text-emerald-600 hover:text-emerald-700 transition-colors"
+                        style={{ cursor: 'pointer', zIndex: 10, position: 'relative' }}
+                        onClick={(e) => e.stopPropagation()}
                       >
                         Ver detalles
                         <ArrowUpRight className="w-4 h-4 ml-1 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
@@ -213,13 +216,21 @@ export default function DashboardPage() {
                     )}
                   </div>
                   
-                  <button className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-50 transition-colors">
-                    <Eye className="w-4 h-4" />
-                  </button>
+                  {stat.href && (
+                    <Link 
+                      to={stat.href}
+                      className="p-2 text-slate-400 hover:text-emerald-600 rounded-lg hover:bg-emerald-50 transition-colors"
+                      style={{ cursor: 'pointer', zIndex: 10, position: 'relative' }}
+                      title={`Ver detalles de ${stat.name.toLowerCase()}`}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Link>
+                  )}
                 </div>
                 
                 {/* Decorative gradient background */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${bgGradients[index]} opacity-0 group-hover:opacity-5 rounded-2xl transition-opacity duration-300`}></div>
+                <div className={`absolute inset-0 bg-gradient-to-br ${bgGradients[index]} opacity-0 group-hover:opacity-5 rounded-2xl transition-opacity duration-300 pointer-events-none`}></div>
               </div>
             </div>
           );

@@ -9,6 +9,8 @@ import { useAuth } from '@/contexts/FirebaseAuthContext';
 import { toast } from '@/components/ui/Toaster';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { CropCard } from '@/components/crops/CropCard';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useConfirm } from '@/hooks/useConfirm';
 import { CropStatus } from '@/utils/cropUtils';
 import { Timestamp } from 'firebase/firestore';
 
@@ -27,6 +29,7 @@ export default function CropsPage() {
   const queryClient = useQueryClient();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingCrop, setEditingCrop] = useState<Crop | null>(null);
+  const { confirm, isOpen, options, handleConfirm, handleCancel } = useConfirm();
 
   // Queries
   const { data: crops = [], isLoading: cropsLoading } = useQuery(
@@ -146,8 +149,17 @@ export default function CropsPage() {
     setShowCreateForm(true);
   };
 
-  const handleDelete = (crop: Crop) => {
-    if (window.confirm(`¿Estás seguro de que quieres eliminar el cultivo "${crop.name}"?`)) {
+  const handleDelete = async (crop: Crop) => {
+    const confirmed = await confirm({
+      title: 'Eliminar Cultivo',
+      message: `¿Estás seguro de que quieres eliminar el cultivo "${crop.name}"?`,
+      confirmText: 'Eliminar',
+      cancelText: 'Cancelar',
+      type: 'danger',
+      itemName: crop.name
+    });
+
+    if (confirmed) {
       deleteCropMutation.mutate(crop.id!);
     }
   };
@@ -382,6 +394,14 @@ export default function CropsPage() {
           </div>
         </div>
       )}
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={isOpen}
+        onConfirm={handleConfirm}
+        onClose={handleCancel}
+        {...options}
+      />
     </div>
   );
 }

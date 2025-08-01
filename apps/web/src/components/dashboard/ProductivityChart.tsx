@@ -8,6 +8,31 @@ interface ProductivityChartProps {
   crops: Crop[];
 }
 
+// Componente CustomTooltip fuera del componente principal para evitar re-renders
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+        <p className="text-sm font-medium text-gray-900">{data.fullName}</p>
+        <p className="text-xs text-gray-600 mb-2">Área: {data.area} ha</p>
+        <div className="space-y-1">
+          <p className="text-xs text-green-600">
+            Cultivos Activos: {data.activeCrops}
+          </p>
+          <p className="text-xs text-blue-600">
+            Cultivos Cosechados: {data.harvestedCrops}
+          </p>
+          <p className="text-xs text-purple-600">
+            Productividad: {data.productivity}%
+          </p>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
 export function ProductivityChart({ farms, crops }: ProductivityChartProps) {
   const productivityData = useMemo(() => {
     if (!farms || !crops) return [];
@@ -34,30 +59,6 @@ export function ProductivityChart({ farms, crops }: ProductivityChartProps) {
   const averageProductivity = productivityData.length > 0 
     ? Math.round(productivityData.reduce((sum, farm) => sum + farm.productivity, 0) / productivityData.length)
     : 0;
-
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-          <p className="text-sm font-medium text-gray-900">{data.fullName}</p>
-          <p className="text-xs text-gray-600 mb-2">Área: {data.area} ha</p>
-          <div className="space-y-1">
-            <p className="text-xs text-green-600">
-              Cultivos Activos: {data.activeCrops}
-            </p>
-            <p className="text-xs text-blue-600">
-              Cultivos Cosechados: {data.harvestedCrops}
-            </p>
-            <p className="text-xs text-purple-600">
-              Productividad: {data.productivity}%
-            </p>
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
 
   if (!productivityData || productivityData.length === 0) {
     return (
