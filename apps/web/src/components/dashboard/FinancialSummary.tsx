@@ -30,18 +30,26 @@ interface FinancialData {
 export function FinancialSummary({ farms, crops, tasks }: FinancialSummaryProps) {
   const financialData: FinancialData = useMemo(() => {
     // Cálculos simulados basados en los datos reales
-    const totalArea = farms.reduce((sum, farm) => sum + farm.size, 0);
+    const totalArea = farms.reduce((sum, farm) => sum + (farm.size || 0), 0);
     const completedTasks = tasks.filter(task => task.status === 'completed').length;
     
     // Estimaciones por hectárea (valores aproximados para diferentes cultivos)
     const costPerHectare = 1500000; // COP por hectárea
     const revenuePerHectare = 2200000; // COP por hectárea
     
-    const totalInvestment = totalArea * costPerHectare;
-    const estimatedRevenue = totalArea * revenuePerHectare;
-    const operationalCosts = completedTasks * 50000; // Costo estimado por tarea completada
+    const totalInvestment = Math.max(0, totalArea * costPerHectare);
+    const estimatedRevenue = Math.max(0, totalArea * revenuePerHectare);
+    const operationalCosts = Math.max(0, completedTasks * 50000); // Costo estimado por tarea completada
     
-    const profitMargin = totalInvestment > 0 ? ((estimatedRevenue - totalInvestment - operationalCosts) / estimatedRevenue) * 100 : 0;
+    // Calcular margen de ganancia con validaciones
+    let profitMargin = 0;
+    if (estimatedRevenue > 0 && totalInvestment >= 0) {
+      profitMargin = ((estimatedRevenue - totalInvestment - operationalCosts) / estimatedRevenue) * 100;
+      // Asegurar que sea un número válido
+      if (!isFinite(profitMargin) || isNaN(profitMargin)) {
+        profitMargin = 0;
+      }
+    }
 
     const costBreakdown = [
       { category: 'Semillas', amount: totalInvestment * 0.25, color: '#10b981' },
@@ -73,10 +81,39 @@ export function FinancialSummary({ farms, crops, tasks }: FinancialSummaryProps)
   }, [farms, crops, tasks]);
 
   const formatCurrency = (amount: number) => {
+    // Validar que el amount sea un número válido
+    if (!amount || isNaN(amount) || !isFinite(amount)) {
+      return '$0';
+    }
+    
+    // Para cantidades muy grandes, usar formato compacto
+    if (amount >= 1000000000) { // 1 billón o más
+      return `$${(amount / 1000000000).toFixed(1)}B`;
+    } else if (amount >= 1000000) { // 1 millón o más
+      return `$${(amount / 1000000).toFixed(1)}M`;
+    } else if (amount >= 1000) { // 1 mil o más
+      return `$${(amount / 1000).toFixed(0)}K`;
+    }
+    
     return new Intl.NumberFormat('es-CO', {
       style: 'currency',
       currency: 'COP',
-      minimumFractionDigits: 0
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount);
+  };
+
+  // Función para mostrar el valor completo en tooltips
+  const formatCurrencyFull = (amount: number) => {
+    if (!amount || isNaN(amount) || !isFinite(amount)) {
+      return '$0';
+    }
+    
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
     }).format(amount);
   };
 
@@ -87,7 +124,7 @@ export function FinancialSummary({ farms, crops, tasks }: FinancialSummaryProps)
           <p className="text-sm font-medium text-gray-900 mb-2">{label}</p>
           {payload.map((entry: any, index: number) => (
             <p key={index} className="text-xs" style={{ color: entry.color }}>
-              {entry.name}: {formatCurrency(entry.value)}
+              {entry.name}: {formatCurrencyFull(entry.value)}
             </p>
           ))}
         </div>
@@ -102,7 +139,7 @@ export function FinancialSummary({ farms, crops, tasks }: FinancialSummaryProps)
       return (
         <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
           <p className="text-sm font-medium text-gray-900">{data.payload.category}</p>
-          <p className="text-xs text-gray-600">{formatCurrency(data.value)}</p>
+          <p className="text-xs text-gray-600">{formatCurrencyFull(data.value)}</p>
           <p className="text-xs text-gray-500">
             {((data.value / financialData.totalInvestment) * 100).toFixed(1)}%
           </p>
@@ -114,9 +151,9 @@ export function FinancialSummary({ farms, crops, tasks }: FinancialSummaryProps)
 
   if (!farms.length) {
     return (
-      <div className="card">
-        <div className="card-header">
-          <h3 className="card-title flex items-center">
+      <div className="p-6">
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 flex items-center">
             <DollarSign className="w-5 h-5 mr-2" />
             Resumen Financiero
           </h3>
@@ -131,31 +168,37 @@ export function FinancialSummary({ farms, crops, tasks }: FinancialSummaryProps)
   }
 
   return (
-    <div className="card">
-      <div className="card-header">
-        <h3 className="card-title flex items-center">
+    <div className="p-6">
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold text-gray-900 flex items-center">
           <DollarSign className="w-5 h-5 mr-2" />
           Resumen Financiero
         </h3>
       </div>
 
       {/* Métricas principales */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="text-center">
-          <p className="text-2xl font-bold text-blue-600">{formatCurrency(financialData.totalInvestment)}</p>
-          <p className="text-xs text-gray-600">Inversión Total</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+          <p className="text-lg md:text-xl font-bold text-blue-600 break-words leading-tight">
+            {formatCurrency(financialData.totalInvestment)}
+          </p>
+          <p className="text-xs text-gray-600 mt-1">Inversión Total</p>
         </div>
-        <div className="text-center">
-          <p className="text-2xl font-bold text-green-600">{formatCurrency(financialData.estimatedRevenue)}</p>
-          <p className="text-xs text-gray-600">Ingresos Estimados</p>
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+          <p className="text-lg md:text-xl font-bold text-green-600 break-words leading-tight">
+            {formatCurrency(financialData.estimatedRevenue)}
+          </p>
+          <p className="text-xs text-gray-600 mt-1">Ingresos Estimados</p>
         </div>
-        <div className="text-center">
-          <p className="text-2xl font-bold text-orange-600">{formatCurrency(financialData.operationalCosts)}</p>
-          <p className="text-xs text-gray-600">Costos Operacionales</p>
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center">
+          <p className="text-lg md:text-xl font-bold text-orange-600 break-words leading-tight">
+            {formatCurrency(financialData.operationalCosts)}
+          </p>
+          <p className="text-xs text-gray-600 mt-1">Costos Operacionales</p>
         </div>
-        <div className="text-center">
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
           <div className="flex items-center justify-center">
-            <p className={`text-2xl font-bold ${financialData.profitMargin >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <p className={`text-lg md:text-xl font-bold ${financialData.profitMargin >= 0 ? 'text-green-600' : 'text-red-600'}`}>
               {financialData.profitMargin.toFixed(1)}%
             </p>
             {financialData.profitMargin >= 0 ? (
@@ -164,7 +207,7 @@ export function FinancialSummary({ farms, crops, tasks }: FinancialSummaryProps)
               <TrendingDown className="w-4 h-4 ml-1 text-red-600" />
             )}
           </div>
-          <p className="text-xs text-gray-600">Margen de Ganancia</p>
+          <p className="text-xs text-gray-600 mt-1">Margen de Ganancia</p>
         </div>
       </div>
 
@@ -223,34 +266,40 @@ export function FinancialSummary({ farms, crops, tasks }: FinancialSummaryProps)
       </div>
 
       {/* Resumen de rentabilidad */}
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <h5 className="text-sm font-medium text-green-800 mb-2">💰 Ganancia Proyectada</h5>
-          <p className="text-lg font-bold text-green-900">
+          <p className="text-base md:text-lg font-bold text-green-900 break-words leading-tight">
             {formatCurrency(financialData.estimatedRevenue - financialData.totalInvestment - financialData.operationalCosts)}
           </p>
-          <p className="text-xs text-green-700">En el ciclo completo</p>
+          <p className="text-xs text-green-700 mt-1">En el ciclo completo</p>
         </div>
 
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <h5 className="text-sm font-medium text-blue-800 mb-2">📊 ROI Estimado</h5>
-          <p className="text-lg font-bold text-blue-900">
-            {financialData.totalInvestment > 0 
-              ? (((financialData.estimatedRevenue - financialData.totalInvestment) / financialData.totalInvestment) * 100).toFixed(1)
-              : 0}%
+          <p className="text-base md:text-lg font-bold text-blue-900">
+            {(() => {
+              if (financialData.totalInvestment <= 0 || !isFinite(financialData.totalInvestment)) return '0.0';
+              const roi = ((financialData.estimatedRevenue - financialData.totalInvestment) / financialData.totalInvestment) * 100;
+              return isFinite(roi) ? roi.toFixed(1) : '0.0';
+            })()}%
           </p>
-          <p className="text-xs text-blue-700">Retorno sobre inversión</p>
+          <p className="text-xs text-blue-700 mt-1">Retorno sobre inversión</p>
         </div>
 
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <h5 className="text-sm font-medium text-yellow-800 mb-2">⏱️ Punto de Equilibrio</h5>
-          <p className="text-lg font-bold text-yellow-900">
-            {financialData.estimatedRevenue > 0 
-              ? Math.ceil((financialData.totalInvestment / financialData.estimatedRevenue) * 12)
-              : 0
-            } meses
+          <p className="text-base md:text-lg font-bold text-yellow-900">
+            {(() => {
+              if (financialData.estimatedRevenue <= 0 || financialData.totalInvestment <= 0 || 
+                  !isFinite(financialData.estimatedRevenue) || !isFinite(financialData.totalInvestment)) {
+                return '0';
+              }
+              const months = (financialData.totalInvestment / financialData.estimatedRevenue) * 12;
+              return isFinite(months) && months > 0 ? Math.ceil(months) : '0';
+            })()} meses
           </p>
-          <p className="text-xs text-yellow-700">Tiempo para recuperar inversión</p>
+          <p className="text-xs text-yellow-700 mt-1">Tiempo para recuperar inversión</p>
         </div>
       </div>
 
@@ -258,11 +307,14 @@ export function FinancialSummary({ farms, crops, tasks }: FinancialSummaryProps)
       <div className="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-4">
         <h5 className="text-sm font-medium text-gray-800 mb-2">💡 Recomendaciones Financieras</h5>
         <ul className="text-xs text-gray-700 space-y-1">
-          {financialData.profitMargin > 20 && (
+          {isFinite(financialData.profitMargin) && financialData.profitMargin > 20 && (
             <li>• Excelente margen de ganancia. Considera expandir la operación.</li>
           )}
-          {financialData.profitMargin < 10 && (
+          {isFinite(financialData.profitMargin) && financialData.profitMargin < 10 && financialData.profitMargin > 0 && (
             <li>• Margen bajo. Revisa los costos operacionales y busca optimizaciones.</li>
+          )}
+          {!isFinite(financialData.profitMargin) || financialData.profitMargin <= 0 && (
+            <li>• Revisa tus datos financieros para obtener mejores proyecciones.</li>
           )}
           <li>• Monitorea los precios del mercado para ajustar las proyecciones.</li>
           <li>• Considera diversificar cultivos para reducir riesgos financieros.</li>

@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
-import { Search, Bell, User, Menu, X, ChevronDown, Settings, LogOut, Sun } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Bell, User, Menu, X, ChevronDown, Settings, LogOut, Sun, MapPin, Wheat, CheckSquare, ArrowUpRight } from 'lucide-react';
 import { useAuth } from '../../contexts/FirebaseAuthContext';
+import { useQuery } from 'react-query';
+import { farmsService, cropsService, tasksService } from '../../services/firebaseService';
+import { Link } from 'react-router-dom';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -11,6 +14,115 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, isSidebarOpen }
   const { currentUser, logout } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+
+  // Obtener datos para búsqueda
+  const userId = currentUser?.uid;
+  
+  const { data: farms = [] } = useQuery(
+    ['farms', userId], 
+    () => farmsService.getFarms(userId!),
+    { enabled: !!userId }
+  );
+  
+  const { data: crops = [] } = useQuery(
+    ['crops', userId], 
+    () => cropsService.getCrops(userId!),
+    { enabled: !!userId }
+  );
+  
+  const { data: tasks = [] } = useQuery(
+    ['tasks', userId], 
+    () => tasksService.getTasks(userId!),
+    { enabled: !!userId }
+  );
+
+  // Función de búsqueda
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setShowSearchResults(false);
+      return;
+    }
+
+    const query = searchQuery.toLowerCase();
+    const results: any[] = [];
+
+    // Buscar en fincas
+    farms?.forEach(farm => {
+      if (farm.name.toLowerCase().includes(query) || 
+          farm.location?.toLowerCase().includes(query)) {
+        results.push({
+          type: 'farm',
+          id: farm.id,
+          title: farm.name,
+          subtitle: farm.location || 'Sin ubicación',
+          description: `${farm.size || 0} hectáreas`,
+          href: '/farms',
+          icon: MapPin,
+          color: 'text-blue-600'
+        });
+      }
+    });
+
+    // Buscar en cultivos
+    crops?.forEach(crop => {
+      const farmName = farms?.find(f => f.id === crop.farmId)?.name || 'Finca desconocida';
+      if (crop.name.toLowerCase().includes(query) || 
+          crop.variety?.toLowerCase().includes(query) ||
+          farmName.toLowerCase().includes(query)) {
+        results.push({
+          type: 'crop',
+          id: crop.id,
+          title: crop.name,
+          subtitle: crop.variety || 'Sin variedad',
+          description: `En ${farmName}`,
+          href: '/crops',
+          icon: Wheat,
+          color: 'text-green-600'
+        });
+      }
+    });
+
+    // Buscar en tareas
+    tasks?.forEach(task => {
+      const farmName = farms?.find(f => f.id === task.farmId)?.name || 'Finca desconocida';
+      if (task.title.toLowerCase().includes(query) || 
+          task.description?.toLowerCase().includes(query) ||
+          farmName.toLowerCase().includes(query)) {
+        results.push({
+          type: 'task',
+          id: task.id,
+          title: task.title,
+          subtitle: task.status === 'completed' ? 'Completada' : 'Pendiente',
+          description: `En ${farmName}`,
+          href: '/tasks',
+          icon: CheckSquare,
+          color: 'text-yellow-600'
+        });
+      }
+    });
+
+    setSearchResults(results.slice(0, 8)); // Limitar a 8 resultados
+    setShowSearchResults(results.length > 0 || searchQuery.trim().length > 0);
+  }, [searchQuery, farms, crops, tasks]);
+
+  // Cerrar resultados al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const searchContainer = document.getElementById('header-search-container');
+      if (searchContainer && !searchContainer.contains(event.target as Node)) {
+        setShowSearchResults(false);
+      }
+    };
+
+    if (showSearchResults) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showSearchResults]);
 
   const currentDate = new Date().toLocaleDateString('es-ES', {
     weekday: 'long',
@@ -51,18 +163,81 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, isSidebarOpen }
           </div>
 
           {/* Center Section - Search (Solo en tablet y desktop) */}
-          <div className="hidden md:flex flex-1 max-w-md mx-4">
+          <div id="header-search-container" className="hidden md:flex flex-1 max-w-md mx-4 relative">
             <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Buscar en Campo360..."
                 className="w-full pl-10 pr-12 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-sm"
               />
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                <kbd className="px-2 py-1 text-xs bg-gray-200 rounded hidden lg:block">⌘K</kbd>
-              </div>
+              {searchQuery ? (
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setShowSearchResults(false);
+                  }}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              ) : (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <kbd className="px-2 py-1 text-xs bg-gray-200 rounded hidden lg:block">⌘K</kbd>
+                </div>
+              )}
             </div>
+
+            {/* Resultados de búsqueda */}
+            {showSearchResults && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-200 z-50 max-h-96 overflow-y-auto">
+                {searchResults.length > 0 ? (
+                  <div className="py-2">
+                    {searchResults.map((result, index) => {
+                      const Icon = result.icon;
+                      return (
+                        <Link
+                          key={`${result.type}-${result.id}-${index}`}
+                          to={result.href}
+                          className="flex items-center px-4 py-3 hover:bg-gray-50 transition-colors"
+                          onClick={() => {
+                            setSearchQuery('');
+                            setShowSearchResults(false);
+                          }}
+                        >
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-3 ${
+                            result.type === 'farm' ? 'bg-blue-100' : 
+                            result.type === 'crop' ? 'bg-green-100' : 'bg-yellow-100'
+                          }`}>
+                            <Icon className={`w-4 h-4 ${result.color}`} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {result.title}
+                            </p>
+                            <p className="text-xs text-gray-500 truncate">
+                              {result.subtitle} • {result.description}
+                            </p>
+                          </div>
+                          <ArrowUpRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        </Link>
+                      );
+                    })}
+                  </div>
+                ) : searchQuery.trim() ? (
+                  <div className="px-4 py-6 text-center">
+                    <div className="text-gray-400 mb-2">
+                      <Search className="w-6 h-6 mx-auto" />
+                    </div>
+                    <p className="text-sm text-gray-500">
+                      No se encontraron resultados para "{searchQuery}"
+                    </p>
+                  </div>
+                ) : null}
+              </div>
+            )}
           </div>
 
           {/* Right Section */}

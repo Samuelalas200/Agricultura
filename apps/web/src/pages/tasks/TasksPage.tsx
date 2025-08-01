@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { useQuery } from 'react-query';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, CheckSquare, Calendar, Clock } from 'lucide-react';
+import { Plus, CheckSquare, Calendar, Clock, MoreVertical, Edit, Trash2 } from 'lucide-react';
 import { tasksService, farmsService, Task } from '@/services/firebaseService';
 import { useAuth } from '@/contexts/FirebaseAuthContext';
 import { toast } from '@/components/ui/Toaster';
@@ -22,8 +22,11 @@ type TaskForm = z.infer<typeof taskSchema>;
 
 export default function TasksPage() {
   const { currentUser } = useAuth();
+  const queryClient = useQueryClient();
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [taskActions, setTaskActions] = useState<string | null>(null);
 
   // Queries
   const { data: tasks = [], isLoading: tasksLoading, refetch: refetchTasks } = useQuery(
@@ -42,40 +45,11 @@ export default function TasksPage() {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<TaskForm>({
     resolver: zodResolver(taskSchema),
   });
-
-  const onSubmit = async (data: TaskForm) => {
-    if (!currentUser) return;
-    
-    setIsSubmitting(true);
-    try {
-      const dueDate = Timestamp.fromDate(new Date(data.dueDate));
-      
-      const taskData = {
-        title: data.title,
-        description: data.description || '',
-        dueDate: dueDate,
-        status: 'pending' as const,
-        priority: data.priority,
-        farmId: data.farmId || undefined,
-        userId: currentUser.uid,
-      };
-      
-      await tasksService.createTask(taskData);
-      
-      toast.success('¡Tarea creada!', 'La tarea ha sido registrada exitosamente');
-      reset();
-      setShowCreateForm(false);
-      refetchTasks();
-    } catch (error: any) {
-      toast.error('Error al crear tarea', error.message || 'Ha ocurrido un error');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handleCompleteTask = async (taskId: string) => {
     try {
@@ -84,6 +58,86 @@ export default function TasksPage() {
       refetchTasks();
     } catch (error: any) {
       toast.error('Error al completar tarea', error.message || 'Ha ocurrido un error');
+    }
+  };
+
+  // Mutations para editar y eliminar
+  const updateTaskMutation = useMutation(
+    ({ taskId, taskData }: { taskId: string; taskData: Partial<Task> }) => 
+      tasksService.updateTask(taskId, taskData),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['tasks']);
+        toast.success('Tarea actualizada exitosamente');
+        setEditingTask(null);
+        setShowCreateForm(false);
+        reset();
+      },
+      onError: (error: any) => {
+        toast.error('Error al actualizar tarea', error.message || 'Ha ocurrido un error');
+      }
+    }
+  );
+
+  const deleteTaskMutation = useMutation(tasksService.deleteTask, {
+    onSuccess: () => {
+      queryClient.invalidateQueries(['tasks']);
+      toast.success('Tarea eliminada exitosamente');
+    },
+    onError: (error: any) => {
+      toast.error('Error al eliminar tarea', error.message || 'Ha ocurrido un error');
+    }
+  });
+
+  const handleEdit = (task: Task) => {
+    setEditingTask(task);
+    setValue('title', task.title);
+    setValue('description', task.description || '');
+    setValue('priority', task.priority);
+    setValue('dueDate', task.dueDate.toDate().toISOString().slice(0, 16));
+    setValue('farmId', task.farmId || '');
+    setShowCreateForm(true);
+    setTaskActions(null);
+  };
+
+  const handleDelete = (task: Task) => {
+    if (window.confirm(`¿Estás seguro de que quieres eliminar la tarea "${task.title}"?`)) {
+      deleteTaskMutation.mutate(task.id!);
+    }
+    setTaskActions(null);
+  };
+
+  const handleFormSubmit = async (data: TaskForm) => {
+    if (!currentUser) return;
+
+    setIsSubmitting(true);
+    try {
+      const taskData = {
+        title: data.title,
+        description: data.description || '',
+        priority: data.priority,
+        dueDate: Timestamp.fromDate(new Date(data.dueDate)),
+        farmId: data.farmId || undefined,
+        userId: currentUser.uid,
+        status: 'pending' as const,
+      };
+
+      if (editingTask) {
+        updateTaskMutation.mutate({ 
+          taskId: editingTask.id!, 
+          taskData 
+        });
+      } else {
+        await tasksService.createTask(taskData);
+        toast.success('¡Tarea creada!', 'La tarea ha sido registrada exitosamente');
+        reset();
+        setShowCreateForm(false);
+        refetchTasks();
+      }
+    } catch (error: any) {
+      toast.error('Error al guardar tarea', error.message || 'Ha ocurrido un error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -137,7 +191,11 @@ export default function TasksPage() {
           </p>
         </div>
         <button
-          onClick={() => setShowCreateForm(true)}
+          onClick={() => {
+            setEditingTask(null);
+            setShowCreateForm(true);
+            reset();
+          }}
           className="btn btn-primary"
         >
           <Plus className="w-4 h-4 mr-2" />
@@ -149,8 +207,22 @@ export default function TasksPage() {
       {showCreateForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4">Nueva Tarea</h3>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">
+                {editingTask ? 'Editar Tarea' : 'Nueva Tarea'}
+              </h3>
+              <button
+                onClick={() => {
+                  setShowCreateForm(false);
+                  setEditingTask(null);
+                  reset();
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+            <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
               <div>
                 <label className="label">Título</label>
                 <input
@@ -219,6 +291,7 @@ export default function TasksPage() {
                   type="button"
                   onClick={() => {
                     setShowCreateForm(false);
+                    setEditingTask(null);
                     reset();
                   }}
                   className="btn btn-secondary"
@@ -230,7 +303,10 @@ export default function TasksPage() {
                   disabled={isSubmitting}
                   className="btn btn-primary"
                 >
-                  {isSubmitting ? 'Creando...' : 'Crear Tarea'}
+                  {isSubmitting 
+                    ? (editingTask ? 'Actualizando...' : 'Creando...') 
+                    : (editingTask ? 'Actualizar Tarea' : 'Crear Tarea')
+                  }
                 </button>
               </div>
             </form>
@@ -246,7 +322,11 @@ export default function TasksPage() {
             <h3 className="text-lg font-medium text-gray-900 mb-2">No hay tareas registradas</h3>
             <p className="text-gray-500 mb-4">Comienza creando tu primera tarea</p>
             <button
-              onClick={() => setShowCreateForm(true)}
+              onClick={() => {
+                setEditingTask(null);
+                setShowCreateForm(true);
+                reset();
+              }}
               className="btn btn-primary"
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -289,15 +369,48 @@ export default function TasksPage() {
                     </div>
                   </div>
                   
-                  {task.status === 'pending' && (
-                    <button
-                      onClick={() => task.id && handleCompleteTask(task.id)}
-                      className="btn btn-sm btn-success"
-                      title="Marcar como completada"
-                    >
-                      <CheckSquare className="w-4 h-4" />
-                    </button>
-                  )}
+                  <div className="flex items-center space-x-2">
+                    {task.status === 'pending' && (
+                      <button
+                        onClick={() => task.id && handleCompleteTask(task.id)}
+                        className="btn btn-sm btn-success"
+                        title="Marcar como completada"
+                      >
+                        <CheckSquare className="w-4 h-4" />
+                      </button>
+                    )}
+                    
+                    <div className="relative">
+                      <button
+                        onClick={() => setTaskActions(taskActions === task.id ? null : task.id!)}
+                        className="p-1 rounded-full hover:bg-gray-100 transition-colors"
+                        title="Más opciones"
+                      >
+                        <MoreVertical className="w-4 h-4 text-gray-500" />
+                      </button>
+                      
+                      {taskActions === task.id && (
+                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200">
+                          <div className="py-1">
+                            <button
+                              onClick={() => handleEdit(task)}
+                              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                            >
+                              <Edit className="w-4 h-4 mr-2" />
+                              Editar tarea
+                            </button>
+                            <button
+                              onClick={() => handleDelete(task)}
+                              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Eliminar tarea
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
