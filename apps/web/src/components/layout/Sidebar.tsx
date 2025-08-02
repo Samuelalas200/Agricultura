@@ -5,6 +5,7 @@ import {
   Wheat, 
   CheckSquare, 
   Package,
+  DollarSign,
   LogOut,
   X,
   ChevronRight,
@@ -45,6 +46,12 @@ const navigation = [
     href: '/inventory', 
     icon: Package,
     description: 'Control de recursos'
+  },
+  { 
+    name: 'Finanzas', 
+    href: '/financial', 
+    icon: DollarSign,
+    description: 'Gestión financiera'
   },
 ];
 

@@ -21,6 +21,7 @@ const EditInventoryItemPage = lazy(() => import('@/pages/inventory/EditInventory
 const PurchasesPage = lazy(() => import('@/pages/inventory/PurchasesPage'));
 const MovementsPage = lazy(() => import('@/pages/inventory/MovementsPage'));
 const ReportsPage = lazy(() => import('@/pages/inventory/ReportsPage'));
+const FinancialPage = lazy(() => import('@/pages/financial/FinancialPage'));
 const SettingsPage = lazy(() => import('@/pages/settings/SettingsPage'));
 const HelpPage = lazy(() => import('@/pages/help/HelpPage'));
 
@@ -122,6 +123,11 @@ function App() {
                 <Route path="inventory/reports" element={
                   <PageErrorBoundary>
                     <ReportsPage />
+                  </PageErrorBoundary>
+                } />
+                <Route path="financial" element={
+                  <PageErrorBoundary>
+                    <FinancialPage />
                   </PageErrorBoundary>
                 } />
                 <Route path="settings" element={
