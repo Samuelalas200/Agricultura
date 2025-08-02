@@ -455,51 +455,62 @@ export function WeatherAlerts() {
           <h4 className="font-medium text-gray-800 mb-3">Pronóstico de 7 días</h4>
           
           {/* Vista móvil: primeros 3 días */}
-          <div className="grid grid-cols-3 gap-2 text-xs md:hidden">
+          <div className="grid grid-cols-3 gap-3 text-xs md:hidden">
             {weather.forecast.slice(0, 3).map((day, index) => (
-              <div key={index} className="text-center p-2 bg-gray-50 rounded">
-                <p className="font-medium">{new Date(day.date).toLocaleDateString('es', { weekday: 'short' })}</p>
-                <div className="my-1 flex justify-center">{getWeatherIcon(day.icon)}</div>
-                <p className="font-semibold">{day.maxTemp}°/{day.minTemp}°</p>
-                <p className="text-blue-600">{day.precipitationChance}%</p>
-                <p className="text-xs text-gray-500">{day.windSpeed} km/h</p>
+              <div key={index} className="text-center p-3 bg-gray-50 rounded-lg">
+                <p className="font-medium text-gray-800 mb-1 truncate">
+                  {index === 0 ? 'Hoy' : 
+                   index === 1 ? 'Mañana' :
+                   new Date(day.date).toLocaleDateString('es', { weekday: 'short' })}
+                </p>
+                <div className="my-2 flex justify-center h-8">{getWeatherIcon(day.icon)}</div>
+                <p className="font-semibold text-gray-800 mb-1">{day.maxTemp}°/{day.minTemp}°</p>
+                <p className="text-blue-600 mb-1">{day.precipitationChance}%</p>
+                <p className="text-gray-500">{day.windSpeed} km/h</p>
+                {day.precipitation > 0 && (
+                  <p className="text-blue-700 font-medium text-xs mt-1">
+                    {Math.round(day.precipitation * 10) / 10}mm
+                  </p>
+                )}
               </div>
             ))}
           </div>
 
           {/* Vista escritorio: 7 días completos */}
           <div className="hidden md:block overflow-x-auto">
-            <div className="grid grid-cols-7 gap-2 text-xs">
+            <div className="grid grid-cols-7 gap-3 text-xs min-w-fit">
               {weather.forecast.slice(0, 7).map((day, index) => (
-                <div key={index} className="text-center p-3 bg-gray-50 rounded-lg min-w-0">
-                  <p className="font-medium text-gray-800 mb-1">
+                <div key={index} className="text-center p-3 bg-gray-50 rounded-lg min-w-[120px] flex-shrink-0">
+                  <p className="font-medium text-gray-800 mb-1 truncate">
                     {index === 0 ? 'Hoy' : 
                      index === 1 ? 'Mañana' :
                      new Date(day.date).toLocaleDateString('es', { weekday: 'short' })}
                   </p>
-                  <p className="text-xs text-gray-600 mb-2">
+                  <p className="text-xs text-gray-600 mb-2 truncate">
                     {new Date(day.date).toLocaleDateString('es', { day: 'numeric', month: 'short' })}
                   </p>
                   
-                  <div className="my-2 flex justify-center">{getWeatherIcon(day.icon)}</div>
+                  <div className="my-2 flex justify-center h-8">{getWeatherIcon(day.icon)}</div>
                   
                   <div className="space-y-1">
                     <p className="font-semibold text-gray-800">{day.maxTemp}°/{day.minTemp}°</p>
                     <p className="text-blue-600 flex items-center justify-center">
-                      <Droplets className="w-3 h-3 mr-1" />
-                      {day.precipitationChance}%
+                      <Droplets className="w-3 h-3 mr-1 flex-shrink-0" />
+                      <span className="truncate">{day.precipitationChance}%</span>
                     </p>
                     <p className="text-gray-600 flex items-center justify-center">
-                      <Wind className="w-3 h-3 mr-1" />
-                      {day.windSpeed} km/h
+                      <Wind className="w-3 h-3 mr-1 flex-shrink-0" />
+                      <span className="truncate">{day.windSpeed} km/h</span>
                     </p>
-                    <p className="text-gray-600">{day.humidity}% hum</p>
+                    <p className="text-gray-600 truncate">{day.humidity}% hum</p>
                     {day.precipitation > 0 && (
-                      <p className="text-blue-700 font-medium">{day.precipitation}mm lluvia</p>
+                      <p className="text-blue-700 font-medium truncate">
+                        {Math.round(day.precipitation * 10) / 10}mm lluvia
+                      </p>
                     )}
                   </div>
                   
-                  <p className="text-xs text-gray-500 mt-2 capitalize leading-tight">
+                  <p className="text-xs text-gray-500 mt-2 capitalize leading-tight line-clamp-2 h-8 overflow-hidden">
                     {day.description}
                   </p>
                 </div>

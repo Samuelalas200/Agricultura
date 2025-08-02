@@ -111,11 +111,14 @@ pnpm run format       # Formatear código
 
 ### ✅ Clima y Alertas Meteorológicas
 - **Integración con OpenWeatherMap**: Datos meteorológicos en tiempo real
+- **16 datos meteorológicos**: Temperatura, humedad, presión, visibilidad, UV, etc.
 - **Alertas inteligentes**: Notificaciones automáticas por condiciones adversas
-- **Datos agrícolas**: Evapotranspiración, días grado, recomendaciones de riego
-- **Notificaciones push**: Alertas críticas y pronóstico diario
-- **Múltiples ubicaciones**: Selector de ciudades con geolocalización
-- **Información especializada**: Riesgo de plagas, condiciones de siembra/cosecha
+- **Datos agrícolas especializados**: Evapotranspiración, días grado, temperatura del suelo
+- **8 métricas agrícolas**: Riego, siembra, cosecha, riesgos de plagas/enfermedades
+- **Pronóstico de 7 días**: Datos detallados con resumen semanal
+- **Notificaciones push**: Alertas críticas y pronóstico diario configurables
+- **Múltiples ubicaciones**: Selector de ciudades con geolocalización GPS
+- **Recomendaciones automáticas**: Sugerencias inteligentes para actividades agrícolas
 
 ### ✅ Dashboard Interactivo
 - Estadísticas en tiempo real
