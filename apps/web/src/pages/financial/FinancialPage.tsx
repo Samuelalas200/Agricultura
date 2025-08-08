@@ -27,6 +27,7 @@ const FinancialPage: React.FC = () => {
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showBudgetForm, setShowBudgetForm] = useState(false);
   const [showCustomerForm, setShowCustomerForm] = useState(false);
+  const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
   const [syncStatus, setSyncStatus] = useState({ isSyncing: false, lastSync: null as Date | null });
 
   // Hook para manejo offline
@@ -368,7 +369,7 @@ const FinancialPage: React.FC = () => {
     // Intentar sincronizar con Firebase inmediatamente
     if (navigator.onLine) {
       try {
-        await firebaseSyncService.syncToFirebase('demo-user');
+        await firebaseSyncService.syncToFirebase();
         console.log('🔄 Transacción sincronizada con Firebase');
       } catch (error) {
         console.warn('⚠️ Error sincronizando con Firebase:', error);
@@ -385,10 +386,21 @@ const FinancialPage: React.FC = () => {
     }));
   };
 
-  const handleBudgetCreated = async (newBudget: Budget) => {
-    console.log('🆕 Nuevo presupuesto creado:', newBudget);
+  const handleBudgetCreated = async (budgetData: Budget) => {
+    const isEditing = editingBudget !== null;
+    console.log(isEditing ? '🔧 Presupuesto actualizado:' : '🆕 Nuevo presupuesto creado:', budgetData);
+    
     setBudgets(prev => {
-      const updatedBudgets = [newBudget, ...prev];
+      let updatedBudgets;
+      if (isEditing) {
+        // Actualizar presupuesto existente
+        updatedBudgets = prev.map(budget => 
+          budget.id === budgetData.id ? budgetData : budget
+        );
+      } else {
+        // Agregar nuevo presupuesto
+        updatedBudgets = [budgetData, ...prev];
+      }
       
       // Persistir en localStorage
       const store = offlineService.getOfflineStore();
@@ -399,10 +411,13 @@ const FinancialPage: React.FC = () => {
       return updatedBudgets;
     });
     
+    // Limpiar estado de edición
+    setEditingBudget(null);
+    
     // Intentar sincronizar con Firebase
     if (navigator.onLine) {
       try {
-        await firebaseSyncService.syncToFirebase('demo-user');
+        await firebaseSyncService.syncToFirebase();
       } catch (error) {
         console.warn('⚠️ Error sincronizando presupuesto con Firebase:', error);
       }
@@ -410,8 +425,8 @@ const FinancialPage: React.FC = () => {
     
     window.dispatchEvent(new CustomEvent('financial-error', {
       detail: { 
-        errorKey: 'budget-created',
-        message: `✅ Presupuesto "${newBudget.name}" creado y ${navigator.onLine ? 'sincronizado' : 'guardado offline'}`,
+        errorKey: isEditing ? 'budget-updated' : 'budget-created',
+        message: `✅ Presupuesto "${budgetData.name}" ${isEditing ? 'actualizado' : 'creado'} y ${navigator.onLine ? 'sincronizado' : 'guardado offline'}`,
         type: 'info' 
       }
     }));
@@ -434,7 +449,7 @@ const FinancialPage: React.FC = () => {
     // Intentar sincronizar con Firebase
     if (navigator.onLine) {
       try {
-        await firebaseSyncService.syncToFirebase('demo-user');
+        await firebaseSyncService.syncToFirebase();
       } catch (error) {
         console.warn('⚠️ Error sincronizando cliente con Firebase:', error);
       }
@@ -444,6 +459,52 @@ const FinancialPage: React.FC = () => {
       detail: { 
         errorKey: 'customer-created',
         message: `✅ Cliente "${newCustomer.name}" creado y ${navigator.onLine ? 'sincronizado' : 'guardado offline'}`,
+        type: 'info' 
+      }
+    }));
+  };
+
+  const handleBudgetEdit = (budget: Budget) => {
+    console.log('🔧 Editar presupuesto:', budget);
+    setEditingBudget(budget);
+    setShowBudgetForm(true);
+  };
+
+  const handleBudgetDelete = async (budget: Budget) => {
+    if (!confirm(`¿Estás seguro de que quieres eliminar el presupuesto "${budget.name}"?`)) {
+      return;
+    }
+
+    console.log('🗑️ Eliminando presupuesto:', budget);
+    
+    setBudgets(prev => {
+      const updatedBudgets = prev.filter(b => b.id !== budget.id);
+      
+      // Persistir en localStorage
+      const store = offlineService.getOfflineStore();
+      store.budgets = updatedBudgets;
+      offlineService.saveOfflineStore(store);
+      console.log('💾 Presupuestos actualizados en localStorage');
+      
+      return updatedBudgets;
+    });
+
+    // Agregar a la cola de eliminación offline
+    offlineService.saveBudgetOffline(budget, 'DELETE', 'demo-user');
+
+    // Intentar sincronizar con Firebase
+    if (navigator.onLine) {
+      try {
+        await firebaseSyncService.syncToFirebase();
+      } catch (error) {
+        console.warn('⚠️ Error sincronizando eliminación con Firebase:', error);
+      }
+    }
+
+    window.dispatchEvent(new CustomEvent('financial-error', {
+      detail: { 
+        errorKey: 'budget-deleted',
+        message: `✅ Presupuesto "${budget.name}" eliminado y ${navigator.onLine ? 'sincronizado' : 'marcado para eliminación offline'}`,
         type: 'info' 
       }
     }));
@@ -551,7 +612,7 @@ const FinancialPage: React.FC = () => {
               }
               
               try {
-                await firebaseSyncService.syncToFirebase('demo-user');
+                await firebaseSyncService.syncToFirebase();
                 await loadFinancialData(); // Recargar datos después de sincronizar
               } catch (error) {
                 console.error('Error en sincronización manual:', error);
@@ -943,12 +1004,14 @@ const FinancialPage: React.FC = () => {
                       </span>
                       <div className="flex space-x-1">
                         <button
+                          onClick={() => handleBudgetEdit(budget)}
                           className="text-gray-400 hover:text-blue-600"
                           title="Editar"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
+                          onClick={() => handleBudgetDelete(budget)}
                           className="text-gray-400 hover:text-red-600"
                           title="Eliminar"
                         >
@@ -1151,8 +1214,12 @@ const FinancialPage: React.FC = () => {
 
       <BudgetForm
         isOpen={showBudgetForm}
-        onClose={() => setShowBudgetForm(false)}
+        onClose={() => {
+          setShowBudgetForm(false);
+          setEditingBudget(null);
+        }}
         onBudgetCreated={handleBudgetCreated}
+        editBudget={editingBudget}
       />
 
       <CustomerForm
